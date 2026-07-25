@@ -1,7 +1,7 @@
 {
-  "name": "ebasm",
-  "displayName": "EBASM",
-  "version": "0.0.1",
+  "name": "basm",
+  "displayName": "BASM",
+  "version": "0.0.2",
   "repository": "https://github.com/hasanpasha/bm",
   "engines": {
     "vscode": "^1.130.0"
@@ -9,20 +9,20 @@
   "contributes": {
     "languages": [
       {
-        "id": "ebasm",
+        "id": "basm",
         "aliases": [
-          "EBASM"
+          "BASM"
         ],
         "extensions": [
-          ".ebasm"
+          ".basm"
         ]
       }
     ],
     "grammars": [
       {
-        "language": "ebasm",
-        "scopeName": "source.ebasm",
-        "path": "./syntaxes/ebasm.tmLanguage.json"
+        "language": "basm",
+        "scopeName": "source.basm",
+        "path": "./syntaxes/basm.tmLanguage.json"
       }
     ]
   }

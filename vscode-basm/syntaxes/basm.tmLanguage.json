@@ -1,0 +1,38 @@
+{
+  "scopeName": "source.basm",
+  "patterns": [
+    { "include": "#instructions" },
+    { "include": "#numbers" },
+    { "include": "#comments" },
+    { "include": "#labels" }
+  ],
+  "repository": {
+    "instructions": {
+      "match": "\\b(push|plus|minus|mult|div|jmp|hlt|drop|jnz|teq|dump|dup|nop)\\b",
+      "name": "keyword.control.basm"
+    },
+    "numbers": {
+      "match": "\\b\\d+\\b",
+      "name": "constant.numeric.basm"
+    },
+    "comments": {
+      "match": "#.*$",
+      "name": "comment.line.hash.basm"
+    },
+    "labels": {
+      "patterns": [
+        {
+          "match": "^\\s*([A-Za-z_][A-Za-z0-9_]*)(:)",
+          "captures": {
+            "1": { "name": "entity.name.label.basm" },
+            "2": { "name": "punctuation.separator.label.basm" }
+          }
+        },
+        {
+          "match": "\\b(?<=jmp\\s|jz\\s|jnz\\s|call\\s)[A-Za-z_][A-Za-z0-9_]*\\b",
+          "name": "entity.name.label.basm"
+        }
+      ]
+    }
+  }
+}
