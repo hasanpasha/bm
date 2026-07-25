@@ -1,4 +1,4 @@
 build
 .vscode
 *.bm
-vscode-ebasm/syntaxes/ebasm.tmLanguage copy.json
+*.vsix

@@ -18,27 +18,27 @@ ifndef BUILD_DIR
 BUILD_DIR	= build
 endif
 
-.PHONY: bmi ebasm examples all clean
+.PHONY: bmi basm examples all clean
 
-all: bmi ebasm examples
+all: bmi basm examples
 
 bmi: ${BUILD_DIR}/bmi
 
 ${BUILD_DIR}/bmi: ${BUILD_DIR}/bmi.o ${BUILD_DIR}/bm.o 
 	${CC} ${CFLAGS} -o $@ $^
 
-ebasm: ${BUILD_DIR}/ebasm
+basm: ${BUILD_DIR}/basm
 
-${BUILD_DIR}/ebasm: ${BUILD_DIR}/ebasm.o ${BUILD_DIR}/bm.o ${BUILD_DIR}/string_view.o
+${BUILD_DIR}/basm: ${BUILD_DIR}/basm.o ${BUILD_DIR}/bm.o ${BUILD_DIR}/string_view.o
 	${CC} ${CFLAGS} -o $@ $^
 
 ${BUILD_DIR}/%.o: src/%.c
 	${CC} ${CFLAGS} -c -o $@ $<
 
-examples: ebasm examples/123.bm examples/fib.bm
+examples: basm examples/123.bm examples/fib.bm
 
-examples/%.bm: examples/%.ebasm
-	${BUILD_DIR}/ebasm $< $@
+examples/%.bm: examples/%.basm
+	${BUILD_DIR}/basm $< $@
 
 clean:
 	rm -rf ${BUILD_DIR}/*
