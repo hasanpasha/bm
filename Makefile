@@ -18,13 +18,13 @@ ifndef BUILD_DIR
 BUILD_DIR	= build
 endif
 
-.PHONY: bmi basm examples all clean
+.PHONY: bme basm examples all clean
 
-all: bmi basm examples
+all: bme basm examples
 
-bmi: ${BUILD_DIR}/bmi
+bme: ${BUILD_DIR}/bme
 
-${BUILD_DIR}/bmi: ${BUILD_DIR}/bmi.o ${BUILD_DIR}/bm.o 
+${BUILD_DIR}/bme: ${BUILD_DIR}/bme.o ${BUILD_DIR}/bm.o 
 	${CC} ${CFLAGS} -o $@ $^
 
 basm: ${BUILD_DIR}/basm
