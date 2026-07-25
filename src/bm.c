@@ -201,7 +201,7 @@ BmError bm_fetch_inst(Bm *bm, BmInst *inst_out) {
   return BM_ERROR_OK;
 }
 
-BmError bm_execute(Bm *bm, BmInst inst) {
+BmError bm_execute_inst(Bm *bm, BmInst inst) {
   BmError error = BM_ERROR_OK;
 
   switch (inst.type) {
@@ -288,8 +288,21 @@ BmError bm_step(Bm *bm) {
   if ((error = bm_fetch_inst(bm, &inst)) != BM_ERROR_OK)
     return error;
 
-  if ((error = bm_execute(bm, inst)) != BM_ERROR_OK)
+  if ((error = bm_execute_inst(bm, inst)) != BM_ERROR_OK)
     return error;
+
+  return error;
+}
+
+BmError bm_execute_program(Bm *bm, int limit) {
+  BmError error = BM_ERROR_OK;
+  while (!bm->halted && limit != 0) {
+    if ((error = bm_step(bm)) != BM_ERROR_OK)
+      return error;
+
+    if (limit > 0)
+      limit--;
+  }
 
   return error;
 }

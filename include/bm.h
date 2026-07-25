@@ -84,8 +84,10 @@ BmError bm_pop(Bm *bm, BmWord *operand_out);
 
 BmError bm_fetch_inst(Bm *bm, BmInst *inst_out);
 
-BmError bm_execute(Bm *bm, BmInst inst);
+BmError bm_execute_inst(Bm *bm, BmInst inst);
 
 BmError bm_step(Bm *bm);
+
+BmError bm_execute_program(Bm *bm, int limit);
 
 #endif // BM_H

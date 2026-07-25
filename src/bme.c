@@ -17,13 +17,12 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
-  BmError error = BM_ERROR_OK;
-  while (!bm.halted) {
-    // bm_dump(&bm, stdout);
-    if ((error = bm_step(&bm)) != BM_ERROR_OK) {
-      fprintf(stderr, "Error: %s\n", bm_error_string(error));
-      return EXIT_FAILURE;
-    }
+  BmError error;
+  if ((error = bm_execute_program(&bm, -1)) != BM_ERROR_OK) {
+    fprintf(stderr, "Error: %s\n", bm_error_string(error));
+    bm_stack_dump(&bm, stderr);
+    fprintf(stderr, "\n");
+    return EXIT_FAILURE;
   }
 
   return EXIT_SUCCESS;
