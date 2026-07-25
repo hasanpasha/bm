@@ -44,8 +44,8 @@ const char *bm_inst_type_string(BmInstType inst_type) {
     return "JMP";
   case BM_INST_TYPE_DROP:
     return "DROP";
-  case BM_INST_TYPE_JNZ:
-    return "JNZ";
+  case BM_INST_TYPE_JT:
+    return "JT";
   case BM_INST_TYPE_TEQ:
     return "TEQ";
   case BM_INST_TYPE_DUMP:
@@ -247,7 +247,7 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
     if ((error = bm_pop(bm, NULL)) != BM_ERROR_OK)
       return error;
     break;
-  case BM_INST_TYPE_JNZ: {
+  case BM_INST_TYPE_JT: {
     BmWord top_value;
     if ((error = bm_pop(bm, &top_value)) != BM_ERROR_OK)
       return error;

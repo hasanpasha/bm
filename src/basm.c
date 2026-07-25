@@ -19,9 +19,9 @@ static BmInst basm_translate_line(StringView line) {
   } else if (sv_eq(inst_name, sv_from_cstr("jmp"))) {
     inst =
         (BmInst){.type = BM_INST_TYPE_JMP, .operand = sv_parse_ulong(operand)};
-  } else if (sv_eq(inst_name, sv_from_cstr("jnz"))) {
+  } else if (sv_eq(inst_name, sv_from_cstr("jt"))) {
     inst =
-        (BmInst){.type = BM_INST_TYPE_JNZ, .operand = sv_parse_ulong(operand)};
+        (BmInst){.type = BM_INST_TYPE_JT, .operand = sv_parse_ulong(operand)};
   } else if (sv_eq(inst_name, sv_from_cstr("plus"))) {
     inst = (BmInst){.type = BM_INST_TYPE_PLUS};
   } else if (sv_eq(inst_name, sv_from_cstr("dump"))) {

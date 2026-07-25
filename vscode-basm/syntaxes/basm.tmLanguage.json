@@ -8,7 +8,7 @@
   ],
   "repository": {
     "instructions": {
-      "match": "\\b(push|plus|minus|mult|div|jmp|hlt|drop|jnz|teq|dump|dup|nop)\\b",
+      "match": "\\b(push|plus|minus|mult|div|jmp|hlt|drop|jt|teq|dump|dup|nop)\\b",
       "name": "keyword.control.basm"
     },
     "numbers": {
