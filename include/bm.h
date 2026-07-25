@@ -76,8 +76,7 @@ void bm_load_program_from_memory(Bm *bm, BmInst *program, BmWord program_size);
 
 bool bm_load_program_from_file(Bm *bm, const char *file_path);
 
-bool bm_save_program_to_file(BmInst *program, size_t program_size,
-                             const char *file_path);
+bool bm_save_program_to_file(const Bm *bm, const char *file_path);
 
 BmError bm_push(Bm *bm, BmWord operand);
 

@@ -148,8 +148,7 @@ bool bm_load_program_from_file(Bm *bm, const char *file_path) {
   return true;
 }
 
-bool bm_save_program_to_file(BmInst *program, size_t program_size,
-                             const char *file_path) {
+bool bm_save_program_to_file(const Bm *bm, const char *file_path) {
   FILE *f = fopen(file_path, "wb");
   if (f == NULL) {
     fprintf(stderr, "Error: could not open file '%s': %s\n", file_path,
@@ -157,7 +156,7 @@ bool bm_save_program_to_file(BmInst *program, size_t program_size,
     return false;
   }
 
-  fwrite(program, sizeof(BmInst), program_size, f);
+  fwrite(bm->program, sizeof(BmInst), bm->program_size, f);
   if (ferror(f)) {
     fprintf(stderr, "Error: could not write to file '%s': %s.\n", file_path,
             strerror(errno));

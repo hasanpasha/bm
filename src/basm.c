@@ -53,9 +53,7 @@ static size_t basm_translate_source(StringView source, BmInst *program,
   return program_size;
 }
 
-#define BASM_PROGRAM_CAP 1024
-
-BmInst program[BASM_PROGRAM_CAP];
+Bm bm = {0};
 
 int main(int argc, char *argv[]) {
   if (argc < 3) {
@@ -67,9 +65,10 @@ int main(int argc, char *argv[]) {
   char *output_file = argv[2];
 
   StringView sv = read_file(input_file);
-  size_t program_size = basm_translate_source(sv, program, BASM_PROGRAM_CAP);
+  bm.program_size = basm_translate_source(sv, bm.program, BM_PROGRAM_CAP);
+  free((void *)sv.ptr);
 
-  if (!bm_save_program_to_file(program, program_size, output_file))
+  if (!bm_save_program_to_file(&bm, output_file))
     return EXIT_FAILURE;
 
   return EXIT_SUCCESS;
