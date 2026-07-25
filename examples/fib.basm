@@ -1,14 +1,9 @@
 push 0
 push 1
-begin:
 dup 1
 dup 1
 plus
 dup 0
 dump
-dup 0
-push 17711
-teq
-jnz 12
-jmp begin
+jmp 2
 hlt
