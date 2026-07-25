@@ -1,6 +1,5 @@
 CC		= gcc
-CFLAGS 	= -g \
-			-std=c23 \
+CFLAGS 	= -std=c23 \
           -Wall -Wextra -Wpedantic \
           -Wshadow \
           -Wconversion \
@@ -12,32 +11,34 @@ CFLAGS 	= -g \
           -Werror=enum-conversion \
           -Werror=enum-int-mismatch \
           -Werror=enum-compare \
-		  -Werror=switch-enum
-
-SRC_DIR	= src
-INC_DIR	= include
+		  -Werror=switch-enum \
+          -Iinclude
 
 ifndef BUILD_DIR
 BUILD_DIR	= build
 endif
 
-CFLAGS += -I${INC_DIR}
+.PHONY: bmi ebasm examples all clean
 
-TARGET=${BUILD_DIR}/bm
+all: bmi ebasm examples
 
-.PHONY: bm run clean
+bmi: ${BUILD_DIR}/bmi
 
-bm: ${TARGET}
-
-${BUILD_DIR}/bm: ${BUILD_DIR}/main.o ${BUILD_DIR}/bm.o
+${BUILD_DIR}/bmi: ${BUILD_DIR}/bmi.o ${BUILD_DIR}/bm.o 
 	${CC} ${CFLAGS} -o $@ $^
 
+ebasm: ${BUILD_DIR}/ebasm
 
-${BUILD_DIR}/%.o: ${SRC_DIR}/%.c
+${BUILD_DIR}/ebasm: ${BUILD_DIR}/ebasm.o ${BUILD_DIR}/bm.o ${BUILD_DIR}/string_view.o
+	${CC} ${CFLAGS} -o $@ $^
+
+${BUILD_DIR}/%.o: src/%.c
 	${CC} ${CFLAGS} -c -o $@ $<
 
-run: bm
-	exec ${TARGET}
+examples: examples/123.bm examples/fib.bm
+
+examples/%.bm: examples/%.ebasm
+	${BUILD_DIR}/ebasm $< $@
 
 clean:
 	rm -rf ${BUILD_DIR}/*

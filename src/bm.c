@@ -52,6 +52,8 @@ const char *bm_inst_type_string(BmInstType inst_type) {
     return "DUMP";
   case BM_INST_TYPE_DUP:
     return "DUP";
+  case BM_INST_TYPE_NOP:
+    return "NOP";
   default:
     BM_UNREACHABLE();
   }
@@ -60,8 +62,9 @@ const char *bm_inst_type_string(BmInstType inst_type) {
 void bm_inst_dump(BmInst inst, FILE *stream) {
   fprintf(stream, "INST_%s", bm_inst_type_string(inst.type));
   if (inst.type == BM_INST_TYPE_PUSH || inst.type == BM_INST_TYPE_JMP ||
-      BM_INST_TYPE_DUP)
+      inst.type == BM_INST_TYPE_DUP) {
     fprintf(stream, "(%ld)", inst.operand);
+  }
 }
 
 void bm_dump(const Bm *bm, FILE *stream) {
@@ -269,6 +272,8 @@ BmError bm_execute(Bm *bm, BmInst inst) {
     if ((error = bm_push(bm, value)) != BM_ERROR_OK)
       return error;
   } break;
+  case BM_INST_TYPE_NOP:
+    break;
   default:
     return BM_ERROR_ILLEGAL_INST;
     break;

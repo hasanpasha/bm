@@ -1,0 +1,29 @@
+{
+  "name": "ebasm",
+  "displayName": "EBASM",
+  "version": "0.0.1",
+  "repository": "https://github.com/hasanpasha/bm",
+  "engines": {
+    "vscode": "^1.130.0"
+  },
+  "contributes": {
+    "languages": [
+      {
+        "id": "ebasm",
+        "aliases": [
+          "EBASM"
+        ],
+        "extensions": [
+          ".ebasm"
+        ]
+      }
+    ],
+    "grammars": [
+      {
+        "language": "ebasm",
+        "scopeName": "source.ebasm",
+        "path": "./syntaxes/ebasm.tmLanguage.json"
+      }
+    ]
+  }
+}

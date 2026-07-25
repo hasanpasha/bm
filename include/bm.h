@@ -33,6 +33,7 @@ const char *bm_error_string(BmError error);
 typedef uint64_t BmWord;
 
 typedef enum BM_INST_TYPE {
+  BM_INST_TYPE_NOP,
   BM_INST_TYPE_HLT,
   BM_INST_TYPE_PUSH,
   BM_INST_TYPE_PLUS,
@@ -68,6 +69,7 @@ void bm_inst_dump(BmInst inst, FILE *stream);
 #define BM_INST_TEQ {.type = BM_INST_TYPE_TEQ}
 #define BM_INST_DUMP {.type = BM_INST_TYPE_DUMP}
 #define BM_INST_DUP(off) {.type = BM_INST_TYPE_DUP, .operand = (off)}
+#define BM_INST_NOP {.type = BM_INST_TYPE_NOP}
 
 typedef struct BM {
   BmWord stack[BM_STACK_CAP];
