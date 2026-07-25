@@ -35,10 +35,11 @@ ${BUILD_DIR}/ebasm: ${BUILD_DIR}/ebasm.o ${BUILD_DIR}/bm.o ${BUILD_DIR}/string_v
 ${BUILD_DIR}/%.o: src/%.c
 	${CC} ${CFLAGS} -c -o $@ $<
 
-examples: examples/123.bm examples/fib.bm
+examples: ebasm examples/123.bm examples/fib.bm
 
 examples/%.bm: examples/%.ebasm
 	${BUILD_DIR}/ebasm $< $@
 
 clean:
 	rm -rf ${BUILD_DIR}/*
+	rm -rf examples/*.bm

@@ -37,12 +37,11 @@ StringView sv_chop_by_delim(StringView *sv, char delim) {
 
   StringView result = {.ptr = sv->ptr, .len = i};
 
+  sv->ptr += i;
+  sv->len -= i;
   if (i < sv->len) {
-    sv->ptr += i + 1;
-    sv->len -= i + 1;
-  } else {
-    sv->ptr += i;
-    sv->len -= i;
+    sv->ptr += 1;
+    sv->len -= 1;
   }
 
   return result;
