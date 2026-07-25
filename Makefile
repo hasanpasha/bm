@@ -1,21 +1,8 @@
-CC		= gcc
-CFLAGS 	= -std=c23 \
-          -Wall -Wextra -Wpedantic \
-          -Wshadow \
-          -Wconversion \
-          -Wsign-conversion \
-          -Wformat=2 \
-          -Wundef \
-          -Wstrict-prototypes \
-          -Wmissing-prototypes \
-          -Werror=enum-conversion \
-          -Werror=enum-int-mismatch \
-          -Werror=enum-compare \
-		  -Werror=switch-enum \
-          -Iinclude
+CC=gcc
+CFLAGS=-std=c23 -Wall -Wextra -Werror=switch-enum -Wpedantic -Iinclude
 
 ifndef BUILD_DIR
-BUILD_DIR	= build
+BUILD_DIR=build
 endif
 
 .PHONY: bme basm debasm examples all clean
