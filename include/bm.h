@@ -57,20 +57,6 @@ typedef struct BM_INST {
 
 void bm_inst_dump(BmInst inst, FILE *stream);
 
-#define BM_INST_PUSH(value) {.type = BM_INST_TYPE_PUSH, .operand = (value)}
-#define BM_INST_PLUS {.type = BM_INST_TYPE_PLUS}
-#define BM_INST_MINUS {.type = BM_INST_TYPE_MINUS}
-#define BM_INST_MULT {.type = BM_INST_TYPE_MULT}
-#define BM_INST_DIV {.type = BM_INST_TYPE_DIV}
-#define BM_INST_JMP(addr) {.type = BM_INST_TYPE_JMP, .operand = (addr)}
-#define BM_INST_HLT {.type = BM_INST_TYPE_HLT}
-#define BM_INST_DROP {.type = BM_INST_TYPE_DROP}
-#define BM_INST_JNZ(addr) {.type = BM_INST_TYPE_JNZ, .operand = (addr)}
-#define BM_INST_TEQ {.type = BM_INST_TYPE_TEQ}
-#define BM_INST_DUMP {.type = BM_INST_TYPE_DUMP}
-#define BM_INST_DUP(off) {.type = BM_INST_TYPE_DUP, .operand = (off)}
-#define BM_INST_NOP {.type = BM_INST_TYPE_NOP}
-
 typedef struct BM {
   BmWord stack[BM_STACK_CAP];
   BmWord stack_index;
