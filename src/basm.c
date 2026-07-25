@@ -55,16 +55,37 @@ static size_t basm_translate_source(StringView source, BmInst *program,
 
 Bm bm = {0};
 
+char *shift(int *argc, char ***argv) {
+  if (*argc < 1)
+    return NULL;
+  char *arg = **argv;
+  *argc -= 1;
+  *argv += 1;
+  return arg;
+}
+
+void usage(FILE *stream, const char *program) {
+  fprintf(stream, "Usage: %s <input.basm> <output.bm>\n", program);
+}
+
 int main(int argc, char *argv[]) {
-  if (argc < 3) {
-    fprintf(stderr, "Error: usage: %s <input_file> <output_file>\n", argv[0]);
+  const char *program = shift(&argc, &argv);
+
+  const char *input_file = shift(&argc, &argv);
+  if (input_file == NULL) {
+    usage(stderr, program);
+    fprintf(stderr, "Error: expected input\n");
     return EXIT_FAILURE;
   }
 
-  char *input_file = argv[1];
-  char *output_file = argv[2];
+  const char *output_file = shift(&argc, &argv);
+  if (output_file == NULL) {
+    usage(stderr, program);
+    fprintf(stderr, "Error: expected output\n");
+    return EXIT_FAILURE;
+  }
 
-  StringView sv = read_file(input_file);
+  StringView sv = sv_read_file(input_file);
   bm.program_size = basm_translate_source(sv, bm.program, BM_PROGRAM_CAP);
   free((void *)sv.ptr);
 

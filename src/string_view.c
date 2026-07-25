@@ -55,6 +55,17 @@ bool sv_eq(StringView a, StringView b) {
 
 bool sv_is_blank(StringView sv) { return sv.len == 0; }
 
+bool sv_begins_with(StringView sv, StringView slice) {
+  if (sv.len < slice.len)
+    return false;
+
+  for (size_t i = 0; i < slice.len; i++)
+    if (sv.ptr[i] != slice.ptr[i])
+      return false;
+
+  return true;
+}
+
 unsigned long sv_parse_ulong(StringView sv) {
   unsigned long result = 0;
   for (size_t i = 0; i < sv.len && isdigit(sv.ptr[i]); i++) {
@@ -64,7 +75,7 @@ unsigned long sv_parse_ulong(StringView sv) {
   return result;
 }
 
-StringView read_file(const char *file_path) {
+StringView sv_read_file(const char *file_path) {
   FILE *f = fopen(file_path, "rb");
   if (f == NULL) {
     fprintf(stderr, "Error: could not open file '%s': %s\n", file_path,

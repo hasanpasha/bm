@@ -1,6 +1,8 @@
 #ifndef STRING_VIEW_H
 #define STRING_VIEW_H
 
+#include <stdbool.h>
+
 typedef struct STRING_VIEW {
   const char *ptr;
   size_t len;
@@ -23,8 +25,10 @@ bool sv_eq(StringView a, StringView b);
 
 bool sv_is_blank(StringView sv);
 
+bool sv_begins_with(StringView sv, StringView slice);
+
 unsigned long sv_parse_ulong(StringView sv);
 
-StringView read_file(const char *file_path);
+StringView sv_read_file(const char *file_path);
 
 #endif
