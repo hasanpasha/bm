@@ -68,7 +68,7 @@ void bm_inst_dump(BmInst inst, FILE *stream) {
 }
 
 void bm_dump(const Bm *bm, FILE *stream) {
-  BmInst inst = bm->program[bm->pc];
+  BmInst inst = bm->program.ptr[bm->pc];
   fprintf(stream, "%04ld:\t", bm->pc);
   bm_inst_dump(inst, stream);
   fprintf(stream, "\t");
@@ -84,14 +84,7 @@ void bm_stack_dump(const Bm *bm, FILE *stream) {
 
 /******************************** Utils ********************************/
 
-void bm_load_program_from_memory(Bm *bm, BmInst *program, BmWord program_size) {
-  assert(program_size < BM_PROGRAM_CAP);
-  memcpy(bm->program, program, program_size * sizeof(BmInst));
-  bm->program_size = program_size;
-}
-
-bool bm_load_program_from_file(Bm *bm, const char *file_path) {
-
+bool bm_program_load_from_file(BmProgram *prg, const char *file_path) {
   FILE *f = fopen(file_path, "rb");
   if (f == NULL) {
     fprintf(stderr, "Error: could not open file '%s': %s\n", file_path,
@@ -127,8 +120,8 @@ bool bm_load_program_from_file(Bm *bm, const char *file_path) {
     return false;
   }
 
-  size_t read_items = fread(bm->program, sizeof(BmInst), program_size, f);
-  if (read_items < program_size) {
+  size_t read_insts = fread(prg->ptr, sizeof(BmInst), program_size, f);
+  if (read_insts < program_size) {
     fprintf(stderr,
             "Error: could not load the entire program file '%s' of size %ld.\n",
             file_path, program_size);
@@ -141,14 +134,14 @@ bool bm_load_program_from_file(Bm *bm, const char *file_path) {
     return false;
   }
 
-  bm->program_size = program_size;
+  prg->len = program_size;
 
   fclose(f);
 
   return true;
 }
 
-bool bm_save_program_to_file(const Bm *bm, const char *file_path) {
+bool bm_program_save_to_file(const BmProgram *prg, const char *file_path) {
   FILE *f = fopen(file_path, "wb");
   if (f == NULL) {
     fprintf(stderr, "Error: could not open file '%s': %s\n", file_path,
@@ -156,7 +149,7 @@ bool bm_save_program_to_file(const Bm *bm, const char *file_path) {
     return false;
   }
 
-  fwrite(bm->program, sizeof(BmInst), bm->program_size, f);
+  fwrite(prg->ptr, sizeof(BmInst), prg->len, f);
   if (ferror(f)) {
     fprintf(stderr, "Error: could not write to file '%s': %s.\n", file_path,
             strerror(errno));
@@ -166,6 +159,11 @@ bool bm_save_program_to_file(const Bm *bm, const char *file_path) {
   fclose(f);
 
   return true;
+}
+
+void bm_program_push(BmProgram *prg, BmInst inst) {
+  assert(prg->len < BM_PROGRAM_CAP);
+  prg->ptr[prg->len++] = inst;
 }
 
 /******************************** Core ********************************/
@@ -191,10 +189,10 @@ BmError bm_pop(Bm *bm, BmWord *operand_out) {
 }
 
 BmError bm_fetch_inst(Bm *bm, BmInst *inst_out) {
-  if (bm->pc >= bm->program_size)
+  if (bm->pc >= bm->program.len)
     return BM_ERROR_ILLEGAL_INST_ACCESS;
 
-  BmInst inst = bm->program[bm->pc++];
+  BmInst inst = bm->program.ptr[bm->pc++];
   if (inst_out != NULL)
     *inst_out = inst;
 

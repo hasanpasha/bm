@@ -19,8 +19,7 @@ typedef struct BASM_UNRESOLVED_JMP {
 } BasmUnresolvedJmp;
 
 typedef struct BASM {
-  Bm bm;
-  size_t program_cap;
+  BmProgram prg;
   BasmLabel labels[BASM_LABELS_CAP];
   size_t labels_size;
   BasmUnresolvedJmp unresolved_jmps[BASM_UNRESOLVED_JMPS_CAP];
@@ -57,9 +56,9 @@ static void basm_push_unresolved_jmp(Basm *basm, BmWord addr,
 }
 
 static void basm_translate_source(Basm *basm, StringView source) {
-  basm->bm.program_size = 0;
+  basm->prg.len = 0;
   while (!sv_is_blank(source)) {
-    assert(basm->bm.program_size < basm->program_cap);
+    assert(basm->prg.len < BM_PROGRAM_CAP);
 
     StringView line = sv_trim(sv_chop_by_delim(&source, '\n'));
 
@@ -75,7 +74,7 @@ static void basm_translate_source(Basm *basm, StringView source) {
     if (sv_ends_with(inst_name, sv_from_cstr(":"))) {
       StringView label = sv_slice(inst_name, 0, -1);
 
-      basm_push_label(basm, label, basm->bm.program_size);
+      basm_push_label(basm, label, basm->prg.len);
 
       line = sv_ltrim(line);
       inst_name = sv_chop_by_delim(&line, ' ');
@@ -100,7 +99,7 @@ static void basm_translate_source(Basm *basm, StringView source) {
       if (isdigit(operand.ptr[0])) {
         inst.operand = sv_parse_ulong(operand);
       } else {
-        basm_push_unresolved_jmp(basm, basm->bm.program_size, operand);
+        basm_push_unresolved_jmp(basm, basm->prg.len, operand);
       }
     } else if (sv_eq(inst_name, sv_from_cstr("jt"))) {
       inst.type = BM_INST_TYPE_JMP_IF_TRUE;
@@ -119,25 +118,23 @@ static void basm_translate_source(Basm *basm, StringView source) {
       exit(1);
     }
 
-    basm->bm.program[basm->bm.program_size++] = inst;
+    bm_program_push(&basm->prg, inst);
   }
 
   for (size_t i = 0; i < basm->unresolved_jmps_size; i++) {
     BasmUnresolvedJmp jmp = basm->unresolved_jmps[i];
     BmWord addr = basm_find_label(basm, jmp.label);
-    basm->bm.program[jmp.addr].operand = addr;
+    basm->prg.ptr[jmp.addr].operand = addr;
   }
 }
 
 static bool basm_assemble_file(Basm *basm, const char *input_path,
                                const char *output_path) {
-  basm->program_cap = BM_PROGRAM_CAP;
-
   StringView sv = sv_read_file(input_path);
   basm_translate_source(basm, sv);
   free((void *)sv.ptr);
 
-  return bm_save_program_to_file(&basm->bm, output_path);
+  return bm_program_save_to_file(&basm->prg, output_path);
 }
 
 Basm basm = {0};

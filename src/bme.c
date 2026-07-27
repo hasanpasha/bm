@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
-  if (!bm_load_program_from_file(&bm, input_file)) {
+  if (!bm_program_load_from_file(&bm.program, input_file)) {
     fprintf(stderr, "Error: failed to load program from '%s'.\n", input_file);
     return EXIT_FAILURE;
   }
