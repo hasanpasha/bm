@@ -1,11 +1,14 @@
 # first two fibonacci numbers
-    push 0
-    push 1
-# the loop
-    dup 1
-    dup 1
-    plus
-    dup 0
-    dump
-    jmp 2   # repeat
-    hlt
+        jmp 1
+        nop
+        nop
+        nop
+        push 0
+        push 1
+loop:   dup 1 # the loop
+        dup 1
+        plus
+        dup 0
+        dump
+        jmp loop   # repeat
+        hlt
