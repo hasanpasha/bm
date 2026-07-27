@@ -256,10 +256,9 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
       bm->pc = inst.operand;
   } break;
   case BM_INST_TYPE_DEBUG_PRINT: {
-    BmWord top_value;
-    if ((error = bm_pop(bm, &top_value)) != BM_ERROR_OK)
-      return error;
-    printf("%ld\n", top_value);
+    if (bm->stack_index <= 0)
+      return BM_ERROR_STACK_UNDERFLOW;
+    printf("%ld\n", bm->stack[bm->stack_index - 1]);
   } break;
   case BM_INST_TYPE_DUPLICATE: {
     if (inst.operand >= bm->stack_index)

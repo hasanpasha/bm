@@ -8,7 +8,6 @@
 loop:   dup 1 # the loop
         dup 1
         plus
-        dup 0
         dump
         jmp loop   # repeat
         hlt
