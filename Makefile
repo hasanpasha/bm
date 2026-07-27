@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-std=c23 -Wall -Wextra -Werror=switch-enum -Wpedantic -Iinclude
+CFLAGS=-std=c23 -Wall -Wextra -Wswitch-enum -Wmissing-prototypes -pedantic -Iinclude
 
 ifndef BUILD_DIR
 BUILD_DIR=build

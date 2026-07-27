@@ -6,7 +6,7 @@
 
 Bm bm = {0};
 
-char *shift(int *argc, char ***argv) {
+static char *shift(int *argc, char ***argv) {
   if (*argc < 1)
     return NULL;
   char *arg = **argv;
@@ -15,7 +15,7 @@ char *shift(int *argc, char ***argv) {
   return arg;
 }
 
-void usage(FILE *stream, const char *program) {
+static void usage(FILE *stream, const char *program) {
   fprintf(stream, "Usage: %s <input.bm> [-h] [-l limit]\n", program);
 }
 

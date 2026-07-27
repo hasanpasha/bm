@@ -6,7 +6,7 @@
 #include <bm.h>
 
 #define BASM_LABELS_CAP 1024
-#define BASM_UNRESOLVED_JMPS_CAP 1024
+#define BASM_DEFERRED_OPERANDS_CAP 1024
 
 typedef struct BASM_LABEL {
   StringView name;
@@ -16,18 +16,18 @@ typedef struct BASM_LABEL {
 typedef struct BASM_UNRESOLVED_JMP {
   BmWord addr;
   StringView label;
-} BasmUnresolvedJmp;
+} BasmDeferredOperand;
 
 typedef struct BASM {
   BmProgram prg;
   BasmLabel labels[BASM_LABELS_CAP];
-  size_t labels_size;
-  BasmUnresolvedJmp unresolved_jmps[BASM_UNRESOLVED_JMPS_CAP];
-  size_t unresolved_jmps_size;
+  size_t labels_len;
+  BasmDeferredOperand deferred_operands[BASM_DEFERRED_OPERANDS_CAP];
+  size_t deferred_operands_len;
 } Basm;
 
 static BmWord basm_find_label(const Basm *basm, StringView name) {
-  for (size_t i = 0; i < basm->labels_size; i++) {
+  for (size_t i = 0; i < basm->labels_len; i++) {
     BasmLabel label = basm->labels[i];
     if (sv_eq(label.name, name)) {
       return label.addr;
@@ -39,20 +39,21 @@ static BmWord basm_find_label(const Basm *basm, StringView name) {
 }
 
 static void basm_push_label(Basm *basm, StringView name, BmWord addr) {
-  assert(basm->labels_size < BASM_LABELS_CAP);
-  basm->labels[basm->labels_size++] = (BasmLabel){
+  assert(basm->labels_len < BASM_LABELS_CAP);
+  basm->labels[basm->labels_len++] = (BasmLabel){
       .name = name,
       .addr = addr,
   };
 }
 
-static void basm_push_unresolved_jmp(Basm *basm, BmWord addr,
-                                     StringView label) {
-  assert(basm->unresolved_jmps_size < BASM_UNRESOLVED_JMPS_CAP);
-  basm->unresolved_jmps[basm->unresolved_jmps_size++] = (BasmUnresolvedJmp){
-      .addr = addr,
-      .label = label,
-  };
+static void basm_push_deferred_operand(Basm *basm, BmWord addr,
+                                       StringView label) {
+  assert(basm->deferred_operands_len < BASM_DEFERRED_OPERANDS_CAP);
+  basm->deferred_operands[basm->deferred_operands_len++] =
+      (BasmDeferredOperand){
+          .addr = addr,
+          .label = label,
+      };
 }
 
 static void basm_translate_source(Basm *basm, StringView source) {
@@ -99,7 +100,7 @@ static void basm_translate_source(Basm *basm, StringView source) {
       if (isdigit(operand.ptr[0])) {
         inst.operand = sv_parse_ulong(operand);
       } else {
-        basm_push_unresolved_jmp(basm, basm->prg.len, operand);
+        basm_push_deferred_operand(basm, basm->prg.len, operand);
       }
     } else if (sv_eq(inst_name, sv_from_cstr("jt"))) {
       inst.type = BM_INST_TYPE_JMP_IF_TRUE;
@@ -121,8 +122,8 @@ static void basm_translate_source(Basm *basm, StringView source) {
     bm_program_push(&basm->prg, inst);
   }
 
-  for (size_t i = 0; i < basm->unresolved_jmps_size; i++) {
-    BasmUnresolvedJmp jmp = basm->unresolved_jmps[i];
+  for (size_t i = 0; i < basm->deferred_operands_len; i++) {
+    BasmDeferredOperand jmp = basm->deferred_operands[i];
     BmWord addr = basm_find_label(basm, jmp.label);
     basm->prg.ptr[jmp.addr].operand = addr;
   }
@@ -139,7 +140,7 @@ static bool basm_assemble_file(Basm *basm, const char *input_path,
 
 Basm basm = {0};
 
-char *shift(int *argc, char ***argv) {
+static char *shift(int *argc, char ***argv) {
   if (*argc < 1)
     return NULL;
   char *arg = **argv;
@@ -148,7 +149,7 @@ char *shift(int *argc, char ***argv) {
   return arg;
 }
 
-void usage(FILE *stream, const char *program) {
+static void usage(FILE *stream, const char *program) {
   fprintf(stream, "Usage: %s <input.basm> <output.bm>\n", program);
 }
 
