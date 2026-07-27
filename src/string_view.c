@@ -14,6 +14,29 @@ StringView sv_from_cstr(const char *str) {
   };
 }
 
+StringView sv_slice(StringView sv, size_t begin, ssize_t end) {
+
+  size_t len = 0;
+  if (end < 0) {
+    if (labs(end) <= sv.len) {
+      len = sv.len + end;
+    }
+  } else if (end > 0) {
+    len = (size_t)end;
+  }
+
+  if (begin > len) {
+    len = 0;
+  } else {
+    len -= begin;
+  }
+
+  return (StringView){
+      .ptr = sv.ptr + begin,
+      .len = len,
+  };
+}
+
 StringView sv_ltrim(StringView sv) {
   size_t i = 0;
   while (i < sv.len && isspace(sv.ptr[i]))
@@ -61,6 +84,17 @@ bool sv_begins_with(StringView sv, StringView slice) {
 
   for (size_t i = 0; i < slice.len; i++)
     if (sv.ptr[i] != slice.ptr[i])
+      return false;
+
+  return true;
+}
+
+bool sv_ends_with(StringView sv, StringView slice) {
+  if (sv.len < slice.len)
+    return false;
+
+  for (size_t i = 0; i < slice.len; i++)
+    if (sv.ptr[sv.len - 1 - i] != slice.ptr[slice.len - 1 - i])
       return false;
 
   return true;

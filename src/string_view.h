@@ -2,6 +2,7 @@
 #define STRING_VIEW_H
 
 #include <stdbool.h>
+#include <sys/types.h>
 
 typedef struct STRING_VIEW {
   const char *ptr;
@@ -12,6 +13,8 @@ typedef struct STRING_VIEW {
 #define SV_ARG(sv) (int)sv.len, sv.ptr
 
 StringView sv_from_cstr(const char *str);
+
+StringView sv_slice(StringView sv, size_t begin, ssize_t end);
 
 StringView sv_ltrim(StringView sv);
 
@@ -26,6 +29,8 @@ bool sv_eq(StringView a, StringView b);
 bool sv_is_blank(StringView sv);
 
 bool sv_begins_with(StringView sv, StringView slice);
+
+bool sv_ends_with(StringView sv, StringView slice);
 
 unsigned long sv_parse_ulong(StringView sv);
 

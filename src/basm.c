@@ -1,62 +1,146 @@
+#include <assert.h>
+#include <ctype.h>
 #include <stdlib.h>
 
 #include "string_view.h"
 #include <bm.h>
 
-static BmInst basm_translate_line(StringView line) {
-  line = sv_ltrim(line);
-  StringView inst_name = sv_chop_by_delim(&line, ' ');
-  StringView operand = sv_trim(sv_chop_by_delim(&line, '#'));
+#define BASM_LABELS_CAP 1024
+#define BASM_UNRESOLVED_JMPS_CAP 1024
 
-  BmInst inst = {0};
+typedef struct BASM_LABEL {
+  StringView name;
+  BmWord addr;
+} BasmLabel;
 
-  if (sv_eq(inst_name, sv_from_cstr("push"))) {
-    inst =
-        (BmInst){.type = BM_INST_TYPE_PUSH, .operand = sv_parse_ulong(operand)};
-  } else if (sv_eq(inst_name, sv_from_cstr("dup"))) {
-    inst =
-        (BmInst){.type = BM_INST_TYPE_DUP, .operand = sv_parse_ulong(operand)};
-  } else if (sv_eq(inst_name, sv_from_cstr("jmp"))) {
-    inst =
-        (BmInst){.type = BM_INST_TYPE_JMP, .operand = sv_parse_ulong(operand)};
-  } else if (sv_eq(inst_name, sv_from_cstr("jt"))) {
-    inst =
-        (BmInst){.type = BM_INST_TYPE_JT, .operand = sv_parse_ulong(operand)};
-  } else if (sv_eq(inst_name, sv_from_cstr("plus"))) {
-    inst = (BmInst){.type = BM_INST_TYPE_PLUS};
-  } else if (sv_eq(inst_name, sv_from_cstr("dump"))) {
-    inst = (BmInst){.type = BM_INST_TYPE_DUMP};
-  } else if (sv_eq(inst_name, sv_from_cstr("teq"))) {
-    inst = (BmInst){.type = BM_INST_TYPE_TEQ};
-  } else if (sv_eq(inst_name, sv_from_cstr("hlt"))) {
-    inst = (BmInst){.type = BM_INST_TYPE_HLT};
-  } else {
-    fprintf(stderr, "Error: unknown instruction '" SV "'\n", SV_ARG(inst_name));
-    exit(1);
-  }
+typedef struct BASM_UNRESOLVED_JMP {
+  BmWord addr;
+  StringView label;
+} BasmUnresolvedJmp;
 
-  return inst;
-}
+typedef struct BASM {
+  Bm bm;
+  size_t program_cap;
+  BasmLabel labels[BASM_LABELS_CAP];
+  size_t labels_size;
+  BasmUnresolvedJmp unresolved_jmps[BASM_UNRESOLVED_JMPS_CAP];
+  size_t unresolved_jmps_size;
+} Basm;
 
-static size_t basm_translate_source(StringView source, BmInst *program,
-                                    size_t program_cap) {
-
-  size_t program_size = 0;
-  while (!sv_is_blank(source) && program_size < program_cap) {
-    StringView line = sv_trim(sv_chop_by_delim(&source, '\n'));
-    if (!sv_is_blank(line)) {
-      if (sv_begins_with(line, sv_from_cstr("#"))) {
-        continue;
-      } else {
-        program[program_size++] = basm_translate_line(line);
-      }
+static BmWord basm_find_label(const Basm *basm, StringView name) {
+  for (size_t i = 0; i < basm->labels_size; i++) {
+    BasmLabel label = basm->labels[i];
+    if (sv_eq(label.name, name)) {
+      return label.addr;
     }
   }
 
-  return program_size;
+  fprintf(stderr, "Error: failed to resolved '" SV "'.\n", SV_ARG(name));
+  exit(1);
 }
 
-Bm bm = {0};
+static void basm_push_label(Basm *basm, StringView name, BmWord addr) {
+  assert(basm->labels_size < BASM_LABELS_CAP);
+  basm->labels[basm->labels_size++] = (BasmLabel){
+      .name = name,
+      .addr = addr,
+  };
+}
+
+static void basm_push_unresolved_jmp(Basm *basm, BmWord addr,
+                                     StringView label) {
+  assert(basm->unresolved_jmps_size < BASM_UNRESOLVED_JMPS_CAP);
+  basm->unresolved_jmps[basm->unresolved_jmps_size++] = (BasmUnresolvedJmp){
+      .addr = addr,
+      .label = label,
+  };
+}
+
+static void basm_translate_source(Basm *basm, StringView source) {
+  basm->bm.program_size = 0;
+  while (!sv_is_blank(source)) {
+    assert(basm->bm.program_size < basm->program_cap);
+
+    StringView line = sv_trim(sv_chop_by_delim(&source, '\n'));
+
+    if (sv_is_blank(line))
+      continue;
+
+    if (sv_begins_with(line, sv_from_cstr("#")))
+      continue;
+
+    line = sv_ltrim(line);
+    StringView inst_name = sv_chop_by_delim(&line, ' ');
+
+    if (sv_ends_with(inst_name, sv_from_cstr(":"))) {
+      StringView label = sv_slice(inst_name, 0, -1);
+
+      basm_push_label(basm, label, basm->bm.program_size);
+
+      line = sv_ltrim(line);
+      inst_name = sv_chop_by_delim(&line, ' ');
+    }
+
+    if (sv_is_blank(inst_name))
+      continue;
+
+    StringView operand = sv_trim(sv_chop_by_delim(&line, '#'));
+
+    BmInst inst = {0};
+    if (sv_eq(inst_name, sv_from_cstr("nop"))) {
+      inst.type = BM_INST_TYPE_NOP;
+    } else if (sv_eq(inst_name, sv_from_cstr("push"))) {
+      inst.type = BM_INST_TYPE_PUSH;
+      inst.operand = sv_parse_ulong(operand);
+    } else if (sv_eq(inst_name, sv_from_cstr("dup"))) {
+      inst.type = BM_INST_TYPE_DUP;
+      inst.operand = sv_parse_ulong(operand);
+    } else if (sv_eq(inst_name, sv_from_cstr("jmp"))) {
+      inst.type = BM_INST_TYPE_JMP;
+      if (isdigit(operand.ptr[0])) {
+        inst.operand = sv_parse_ulong(operand);
+      } else {
+        basm_push_unresolved_jmp(basm, basm->bm.program_size, operand);
+      }
+    } else if (sv_eq(inst_name, sv_from_cstr("jt"))) {
+      inst.type = BM_INST_TYPE_JT;
+      inst.operand = sv_parse_ulong(operand);
+    } else if (sv_eq(inst_name, sv_from_cstr("plus"))) {
+      inst.type = BM_INST_TYPE_PLUS;
+    } else if (sv_eq(inst_name, sv_from_cstr("dump"))) {
+      inst.type = BM_INST_TYPE_DUMP;
+    } else if (sv_eq(inst_name, sv_from_cstr("teq"))) {
+      inst.type = BM_INST_TYPE_TEQ;
+    } else if (sv_eq(inst_name, sv_from_cstr("hlt"))) {
+      inst.type = BM_INST_TYPE_HLT;
+    } else {
+      fprintf(stderr, "Error: unknown instruction '" SV "'\n",
+              SV_ARG(inst_name));
+      exit(1);
+    }
+
+    basm->bm.program[basm->bm.program_size++] = inst;
+  }
+
+  for (size_t i = 0; i < basm->unresolved_jmps_size; i++) {
+    BasmUnresolvedJmp jmp = basm->unresolved_jmps[i];
+    BmWord addr = basm_find_label(basm, jmp.label);
+    basm->bm.program[jmp.addr].operand = addr;
+  }
+}
+
+static bool basm_assemble_file(Basm *basm, const char *input_path,
+                               const char *output_path) {
+  basm->program_cap = BM_PROGRAM_CAP;
+
+  StringView sv = sv_read_file(input_path);
+  basm_translate_source(basm, sv);
+  free((void *)sv.ptr);
+
+  return bm_save_program_to_file(&basm->bm, output_path);
+}
+
+Basm basm = {0};
 
 char *shift(int *argc, char ***argv) {
   if (*argc < 1)
@@ -88,11 +172,7 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
-  StringView sv = sv_read_file(input_file);
-  bm.program_size = basm_translate_source(sv, bm.program, BM_PROGRAM_CAP);
-  free((void *)sv.ptr);
-
-  if (!bm_save_program_to_file(&bm, output_file))
+  if (!basm_assemble_file(&basm, input_file, output_file))
     return EXIT_FAILURE;
 
   return EXIT_SUCCESS;
