@@ -28,32 +28,32 @@ const char *bm_error_string(BmError error) {
 
 const char *bm_inst_type_string(BmInstType inst_type) {
   switch (inst_type) {
-  case BM_INST_TYPE_HLT:
-    return "HLT";
+  case BM_INST_TYPE_HALT:
+    return "HALT";
   case BM_INST_TYPE_PUSH:
     return "PUSH";
   case BM_INST_TYPE_PLUS:
     return "PLUS";
   case BM_INST_TYPE_MINUS:
     return "MINUS";
-  case BM_INST_TYPE_MULT:
-    return "MULT";
-  case BM_INST_TYPE_DIV:
-    return "DIV";
-  case BM_INST_TYPE_JMP:
-    return "JMP";
+  case BM_INST_TYPE_MULTIPLY:
+    return "MULTIPLY";
+  case BM_INST_TYPE_DIVIDE:
+    return "DIVIDE";
+  case BM_INST_TYPE_JUMP:
+    return "JUMP";
   case BM_INST_TYPE_DROP:
     return "DROP";
-  case BM_INST_TYPE_JT:
-    return "JT";
-  case BM_INST_TYPE_TEQ:
-    return "TEQ";
-  case BM_INST_TYPE_DUMP:
-    return "DUMP";
-  case BM_INST_TYPE_DUP:
-    return "DUP";
-  case BM_INST_TYPE_NOP:
-    return "NOP";
+  case BM_INST_TYPE_JMP_IF_TRUE:
+    return "JMP_IF_TRUE";
+  case BM_INST_TYPE_TEST_EQUALS:
+    return "TEST_EQUALS";
+  case BM_INST_TYPE_DEBUG_PRINT:
+    return "DEBUG_PRINT";
+  case BM_INST_TYPE_DUPLICATE:
+    return "DUPLICATE";
+  case BM_INST_TYPE_NO_OPERATION:
+    return "NO_OPERATION";
   default:
     BM_UNREACHABLE();
   }
@@ -61,8 +61,8 @@ const char *bm_inst_type_string(BmInstType inst_type) {
 
 void bm_inst_dump(BmInst inst, FILE *stream) {
   fprintf(stream, "INST_%s", bm_inst_type_string(inst.type));
-  if (inst.type == BM_INST_TYPE_PUSH || inst.type == BM_INST_TYPE_JMP ||
-      inst.type == BM_INST_TYPE_DUP) {
+  if (inst.type == BM_INST_TYPE_PUSH || inst.type == BM_INST_TYPE_JUMP ||
+      inst.type == BM_INST_TYPE_DUPLICATE) {
     fprintf(stream, "(%ld)", inst.operand);
   }
 }
@@ -211,9 +211,9 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
     break;
   case BM_INST_TYPE_PLUS:
   case BM_INST_TYPE_MINUS:
-  case BM_INST_TYPE_MULT:
-  case BM_INST_TYPE_DIV:
-  case BM_INST_TYPE_TEQ: {
+  case BM_INST_TYPE_MULTIPLY:
+  case BM_INST_TYPE_DIVIDE:
+  case BM_INST_TYPE_TEST_EQUALS: {
     BmWord a, b, result;
     if ((error = bm_pop(bm, &b)) != BM_ERROR_OK)
       return error;
@@ -224,30 +224,30 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
       result = a + b;
     } else if (inst.type == BM_INST_TYPE_MINUS) {
       result = a - b;
-    } else if (inst.type == BM_INST_TYPE_MULT) {
+    } else if (inst.type == BM_INST_TYPE_MULTIPLY) {
       result = a * b;
-    } else if (inst.type == BM_INST_TYPE_DIV) {
+    } else if (inst.type == BM_INST_TYPE_DIVIDE) {
       if (b == 0)
         return BM_ERROR_DIVIDE_BY_ZERO;
       result = a / b;
-    } else if (inst.type == BM_INST_TYPE_TEQ) {
+    } else if (inst.type == BM_INST_TYPE_TEST_EQUALS) {
       result = a == b;
     }
 
     if ((error = bm_push(bm, result)) != BM_ERROR_OK)
       return error;
   } break;
-  case BM_INST_TYPE_JMP:
+  case BM_INST_TYPE_JUMP:
     bm->pc = inst.operand;
     break;
-  case BM_INST_TYPE_HLT:
+  case BM_INST_TYPE_HALT:
     bm->halted = true;
     break;
   case BM_INST_TYPE_DROP:
     if ((error = bm_pop(bm, NULL)) != BM_ERROR_OK)
       return error;
     break;
-  case BM_INST_TYPE_JT: {
+  case BM_INST_TYPE_JMP_IF_TRUE: {
     BmWord top_value;
     if ((error = bm_pop(bm, &top_value)) != BM_ERROR_OK)
       return error;
@@ -255,13 +255,13 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
     if (top_value != 0)
       bm->pc = inst.operand;
   } break;
-  case BM_INST_TYPE_DUMP: {
+  case BM_INST_TYPE_DEBUG_PRINT: {
     BmWord top_value;
     if ((error = bm_pop(bm, &top_value)) != BM_ERROR_OK)
       return error;
     printf("%ld\n", top_value);
   } break;
-  case BM_INST_TYPE_DUP: {
+  case BM_INST_TYPE_DUPLICATE: {
     if (inst.operand >= bm->stack_index)
       return BM_ERROR_STACK_UNDERFLOW;
 
@@ -271,7 +271,7 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
     if ((error = bm_push(bm, value)) != BM_ERROR_OK)
       return error;
   } break;
-  case BM_INST_TYPE_NOP:
+  case BM_INST_TYPE_NO_OPERATION:
     break;
   default:
     return BM_ERROR_ILLEGAL_INST;

@@ -22,10 +22,10 @@ int main(int argc, char const *argv[]) {
   for (BmWord i = 0; i < bm.program_size; i++) {
     BmInst inst = bm.program[i];
     switch (inst.type) {
-    case BM_INST_TYPE_NOP:
+    case BM_INST_TYPE_NO_OPERATION:
       printf("nop\n");
       break;
-    case BM_INST_TYPE_HLT:
+    case BM_INST_TYPE_HALT:
       printf("hlt\n");
       break;
     case BM_INST_TYPE_PUSH:
@@ -37,28 +37,28 @@ int main(int argc, char const *argv[]) {
     case BM_INST_TYPE_MINUS:
       printf("minus\n");
       break;
-    case BM_INST_TYPE_MULT:
+    case BM_INST_TYPE_MULTIPLY:
       printf("mult\n");
       break;
-    case BM_INST_TYPE_DIV:
+    case BM_INST_TYPE_DIVIDE:
       printf("div\n");
       break;
-    case BM_INST_TYPE_JMP:
+    case BM_INST_TYPE_JUMP:
       printf("jmp %zu\n", inst.operand);
       break;
     case BM_INST_TYPE_DROP:
       printf("drop\n");
       break;
-    case BM_INST_TYPE_JT:
+    case BM_INST_TYPE_JMP_IF_TRUE:
       printf("jt %zu\n", inst.operand);
       break;
-    case BM_INST_TYPE_TEQ:
+    case BM_INST_TYPE_TEST_EQUALS:
       printf("teq\n");
       break;
-    case BM_INST_TYPE_DUMP:
+    case BM_INST_TYPE_DEBUG_PRINT:
       printf("dump\n");
       break;
-    case BM_INST_TYPE_DUP:
+    case BM_INST_TYPE_DUPLICATE:
       printf("dup %zu\n", inst.operand);
       break;
     }

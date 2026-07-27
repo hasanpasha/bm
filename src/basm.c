@@ -88,31 +88,31 @@ static void basm_translate_source(Basm *basm, StringView source) {
 
     BmInst inst = {0};
     if (sv_eq(inst_name, sv_from_cstr("nop"))) {
-      inst.type = BM_INST_TYPE_NOP;
+      inst.type = BM_INST_TYPE_NO_OPERATION;
     } else if (sv_eq(inst_name, sv_from_cstr("push"))) {
       inst.type = BM_INST_TYPE_PUSH;
       inst.operand = sv_parse_ulong(operand);
     } else if (sv_eq(inst_name, sv_from_cstr("dup"))) {
-      inst.type = BM_INST_TYPE_DUP;
+      inst.type = BM_INST_TYPE_DUPLICATE;
       inst.operand = sv_parse_ulong(operand);
     } else if (sv_eq(inst_name, sv_from_cstr("jmp"))) {
-      inst.type = BM_INST_TYPE_JMP;
+      inst.type = BM_INST_TYPE_JUMP;
       if (isdigit(operand.ptr[0])) {
         inst.operand = sv_parse_ulong(operand);
       } else {
         basm_push_unresolved_jmp(basm, basm->bm.program_size, operand);
       }
     } else if (sv_eq(inst_name, sv_from_cstr("jt"))) {
-      inst.type = BM_INST_TYPE_JT;
+      inst.type = BM_INST_TYPE_JMP_IF_TRUE;
       inst.operand = sv_parse_ulong(operand);
     } else if (sv_eq(inst_name, sv_from_cstr("plus"))) {
       inst.type = BM_INST_TYPE_PLUS;
     } else if (sv_eq(inst_name, sv_from_cstr("dump"))) {
-      inst.type = BM_INST_TYPE_DUMP;
+      inst.type = BM_INST_TYPE_DEBUG_PRINT;
     } else if (sv_eq(inst_name, sv_from_cstr("teq"))) {
-      inst.type = BM_INST_TYPE_TEQ;
+      inst.type = BM_INST_TYPE_TEST_EQUALS;
     } else if (sv_eq(inst_name, sv_from_cstr("hlt"))) {
-      inst.type = BM_INST_TYPE_HLT;
+      inst.type = BM_INST_TYPE_HALT;
     } else {
       fprintf(stderr, "Error: unknown instruction '" SV "'\n",
               SV_ARG(inst_name));
