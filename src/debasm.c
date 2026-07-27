@@ -21,9 +21,47 @@ int main(int argc, char const *argv[]) {
 
   for (BmWord i = 0; i < bm.program_size; i++) {
     BmInst inst = bm.program[i];
-    printf("%04ld: ", i);
-    bm_inst_dump(inst, stdout);
-    printf("\n");
+    switch (inst.type) {
+    case BM_INST_TYPE_NOP:
+      printf("nop\n");
+      break;
+    case BM_INST_TYPE_HLT:
+      printf("hlt\n");
+      break;
+    case BM_INST_TYPE_PUSH:
+      printf("push %zu\n", inst.operand);
+      break;
+    case BM_INST_TYPE_PLUS:
+      printf("plus\n");
+      break;
+    case BM_INST_TYPE_MINUS:
+      printf("minus\n");
+      break;
+    case BM_INST_TYPE_MULT:
+      printf("mult\n");
+      break;
+    case BM_INST_TYPE_DIV:
+      printf("div\n");
+      break;
+    case BM_INST_TYPE_JMP:
+      printf("jmp %zu\n", inst.operand);
+      break;
+    case BM_INST_TYPE_DROP:
+      printf("drop\n");
+      break;
+    case BM_INST_TYPE_JT:
+      printf("jt %zu\n", inst.operand);
+      break;
+    case BM_INST_TYPE_TEQ:
+      printf("teq\n");
+      break;
+    case BM_INST_TYPE_DUMP:
+      printf("dump\n");
+      break;
+    case BM_INST_TYPE_DUP:
+      printf("dup %zu\n", inst.operand);
+      break;
+    }
   }
 
   return EXIT_SUCCESS;
