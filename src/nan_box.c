@@ -58,8 +58,17 @@ BmNanBox bm_nb_pointer(void *ptr) {
   return set_value(set_type(NAN, BM_NAN_BOX_TYPE_POINTER), (uint64_t)ptr);
 }
 
-double bm_nb_as_double(BmNanBox nb) { return nb; }
+double bm_nb_as_double(BmNanBox nb) {
+  assert(bm_nb_get_type(nb) == BM_NAN_BOX_TYPE_DOUBLE);
+  return nb;
+}
 
-uint64_t bm_nb_as_integer(BmNanBox nb) { return get_value(nb); }
+uint64_t bm_nb_as_integer(BmNanBox nb) {
+  assert(bm_nb_get_type(nb) == BM_NAN_BOX_TYPE_INTEGER);
+  return get_value(nb);
+}
 
-void *bm_nb_as_pointer(BmNanBox nb) { return (void *)get_value(nb); }
+void *bm_nb_as_pointer(BmNanBox nb) {
+  assert(bm_nb_get_type(nb) == BM_NAN_BOX_TYPE_POINTER);
+  return (void *)get_value(nb);
+}
