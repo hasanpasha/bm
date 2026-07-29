@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
   BmError error = bm_execute_program(&bm, limit);
   if (error != BM_ERROR_OK) {
     fprintf(stderr, "Error: %s\n", bm_error_string(error));
-    bm_stack_dump(&bm, stderr);
+    bm_stack_dump(&bm.stack, stderr);
     fprintf(stderr, "\n");
     return EXIT_FAILURE;
   }

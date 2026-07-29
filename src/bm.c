@@ -72,14 +72,8 @@ void bm_dump(const Bm *bm, FILE *stream) {
   fprintf(stream, "%04ld:\t", bm->pc);
   bm_inst_dump(inst, stream);
   fprintf(stream, "\t");
-  bm_stack_dump(bm, stream);
+  bm_stack_dump(&bm->stack, stream);
   fprintf(stream, "\n");
-}
-
-void bm_stack_dump(const Bm *bm, FILE *stream) {
-  fprintf(stream, "stack: ");
-  for (size_t i = 0; i < bm->stack_index; i++)
-    fprintf(stream, "%ld ", bm->stack[i]);
 }
 
 /******************************** Utils ********************************/
@@ -168,19 +162,25 @@ void bm_program_push(BmProgram *prg, BmInst inst) {
 
 /******************************** Core ********************************/
 
-BmError bm_push(Bm *bm, BmWord operand) {
-  if (bm->stack_index >= BM_STACK_CAP)
+void bm_stack_dump(const BmStack *stack, FILE *stream) {
+  fprintf(stream, "stack: ");
+  for (size_t i = 0; i < stack->idx; i++)
+    fprintf(stream, "%ld ", stack->ptr[i]);
+}
+
+BmError bm_stack_push(BmStack *stack, BmWord operand) {
+  if (stack->idx >= BM_STACK_CAP)
     return BM_ERROR_STACK_OVERFLOW;
 
-  bm->stack[bm->stack_index++] = operand;
+  stack->ptr[stack->idx++] = operand;
   return BM_ERROR_OK;
 }
 
-BmError bm_pop(Bm *bm, BmWord *operand_out) {
-  if (bm->stack_index == 0)
+BmError bm_stack_pop(BmStack *stack, BmWord *operand_out) {
+  if (stack->idx == 0)
     return BM_ERROR_STACK_UNDERFLOW;
 
-  BmWord operand = bm->stack[--bm->stack_index];
+  BmWord operand = stack->ptr[--stack->idx];
 
   if (operand_out != NULL)
     *operand_out = operand;
@@ -204,7 +204,7 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
 
   switch (inst.type) {
   case BM_INST_TYPE_PUSH:
-    if ((error = bm_push(bm, inst.operand)) != BM_ERROR_OK)
+    if ((error = bm_stack_push(&bm->stack, inst.operand)) != BM_ERROR_OK)
       return error;
     break;
   case BM_INST_TYPE_PLUS:
@@ -213,9 +213,9 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
   case BM_INST_TYPE_DIVIDE:
   case BM_INST_TYPE_TEST_EQUALS: {
     BmWord a, b, result;
-    if ((error = bm_pop(bm, &b)) != BM_ERROR_OK)
+    if ((error = bm_stack_pop(&bm->stack, &b)) != BM_ERROR_OK)
       return error;
-    if ((error = bm_pop(bm, &a)) != BM_ERROR_OK)
+    if ((error = bm_stack_pop(&bm->stack, &a)) != BM_ERROR_OK)
       return error;
 
     if (inst.type == BM_INST_TYPE_PLUS) {
@@ -232,7 +232,7 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
       result = a == b;
     }
 
-    if ((error = bm_push(bm, result)) != BM_ERROR_OK)
+    if ((error = bm_stack_push(&bm->stack, result)) != BM_ERROR_OK)
       return error;
   } break;
   case BM_INST_TYPE_JUMP:
@@ -242,30 +242,30 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
     bm->halted = true;
     break;
   case BM_INST_TYPE_DROP:
-    if ((error = bm_pop(bm, NULL)) != BM_ERROR_OK)
+    if ((error = bm_stack_pop(&bm->stack, NULL)) != BM_ERROR_OK)
       return error;
     break;
   case BM_INST_TYPE_JMP_IF_TRUE: {
     BmWord top_value;
-    if ((error = bm_pop(bm, &top_value)) != BM_ERROR_OK)
+    if ((error = bm_stack_pop(&bm->stack, &top_value)) != BM_ERROR_OK)
       return error;
 
     if (top_value != 0)
       bm->pc = inst.operand;
   } break;
   case BM_INST_TYPE_DEBUG_PRINT: {
-    if (bm->stack_index <= 0)
+    if (bm->stack.idx <= 0)
       return BM_ERROR_STACK_UNDERFLOW;
-    printf("%ld\n", bm->stack[bm->stack_index - 1]);
+    printf("%ld\n", bm->stack.ptr[bm->stack.idx - 1]);
   } break;
   case BM_INST_TYPE_DUPLICATE: {
-    if (inst.operand >= bm->stack_index)
+    if (inst.operand >= bm->stack.idx)
       return BM_ERROR_STACK_UNDERFLOW;
 
-    BmWord index = bm->stack_index - inst.operand - 1;
-    BmWord value = bm->stack[index];
+    BmWord index = bm->stack.idx - inst.operand - 1;
+    BmWord value = bm->stack.ptr[index];
 
-    if ((error = bm_push(bm, value)) != BM_ERROR_OK)
+    if ((error = bm_stack_push(&bm->stack, value)) != BM_ERROR_OK)
       return error;
   } break;
   case BM_INST_TYPE_NO_OPERATION:

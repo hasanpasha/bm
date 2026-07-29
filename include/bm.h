@@ -57,16 +57,20 @@ typedef struct BM_INST {
 
 void bm_inst_dump(BmInst inst, FILE *stream);
 
-// typedef struct BM_STACK {
-//   BmWord *ptr;
-//   BmWord idx;
-//   BmWord cap;
-// } BmStack;
+typedef struct BM_STACK {
+  BmWord ptr[BM_STACK_CAP];
+  BmWord idx;
+} BmStack;
+
+void bm_stack_dump(const BmStack *stack, FILE *stream);
+
+BmError bm_stack_push(BmStack *stack, BmWord operand);
+
+BmError bm_stack_pop(BmStack *stack, BmWord *operand_out);
 
 typedef struct BM_PROGRAM {
   BmInst ptr[BM_PROGRAM_CAP];
   BmWord len;
-  // BmWord cap;
 } BmProgram;
 
 bool bm_program_load_from_file(BmProgram *prg, const char *file_path);
@@ -76,22 +80,13 @@ bool bm_program_save_to_file(const BmProgram *prg, const char *file_path);
 void bm_program_push(BmProgram *prg, BmInst inst);
 
 typedef struct BM {
-  BmWord stack[BM_STACK_CAP];
-  BmWord stack_index;
-
+  BmStack stack;
   BmProgram program;
   BmWord pc;
-
   bool halted;
 } Bm;
 
 void bm_dump(const Bm *bm, FILE *stream);
-
-void bm_stack_dump(const Bm *bm, FILE *stream);
-
-BmError bm_push(Bm *bm, BmWord operand);
-
-BmError bm_pop(Bm *bm, BmWord *operand_out);
 
 BmError bm_fetch_inst(Bm *bm, BmInst *inst_out);
 
