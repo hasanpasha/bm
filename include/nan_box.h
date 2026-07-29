@@ -2,6 +2,7 @@
 #define BM_NAN_BOX
 
 #include <stdint.h>
+#include <stdio.h>
 
 // must never be bigger than 8
 typedef enum BM_NAN_BOX_TYPE {
@@ -12,7 +13,11 @@ typedef enum BM_NAN_BOX_TYPE {
 
 typedef double BmNanBox;
 
+void bm_nb_type_dump(BmNanBoxType type, FILE *stream);
+
 BmNanBoxType bm_nb_get_type(BmNanBox nb);
+
+void bm_nb_dump(BmNanBox nb, FILE *stream);
 
 BmNanBox bm_nb_double(double value);
 BmNanBox bm_nb_integer(uint64_t value);

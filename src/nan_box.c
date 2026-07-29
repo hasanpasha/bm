@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <math.h>
 #include <stdint.h>
 #include <string.h>
@@ -40,12 +41,46 @@ inline static BmNanBox set_value(BmNanBox nb, uint64_t val) {
   return ulong_as_nb((nb_as_ulong(nb) & ~VALUE_MASK) | (val & VALUE_MASK));
 }
 
+void bm_nb_type_dump(BmNanBoxType type, FILE *stream) {
+  switch (type) {
+  case BM_NAN_BOX_TYPE_DOUBLE:
+    fprintf(stream, "DOUBLE");
+    break;
+  case BM_NAN_BOX_TYPE_INTEGER:
+    fprintf(stream, "INTEGER");
+    break;
+  case BM_NAN_BOX_TYPE_POINTER:
+    fprintf(stream, "POINTER");
+    break;
+  default:
+    break;
+  }
+}
+
 BmNanBoxType bm_nb_get_type(BmNanBox nb) {
   if (!isnan(nb)) {
     return BM_NAN_BOX_TYPE_DOUBLE;
   } else {
     return get_type(nb);
   }
+}
+
+void bm_nb_dump(BmNanBox nb, FILE *stream) {
+  BmNanBoxType type = bm_nb_get_type(nb);
+  bm_nb_type_dump(type, stream);
+  fputc('(', stream);
+  switch (type) {
+  case BM_NAN_BOX_TYPE_DOUBLE:
+    fprintf(stream, "%lf", bm_nb_as_double(nb));
+    break;
+  case BM_NAN_BOX_TYPE_INTEGER:
+    fprintf(stream, "%ld", bm_nb_as_integer(nb));
+    break;
+  case BM_NAN_BOX_TYPE_POINTER:
+    fprintf(stream, "%p", bm_nb_as_pointer(nb));
+    break;
+  }
+  fputc(')', stream);
 }
 
 BmNanBox bm_nb_double(double value) { return value; }
