@@ -11,13 +11,13 @@
 #define TYPE_MASK (((1ULL << TYPE_BITS) - 1ULL) << VALUE_BITS)
 #define VALUE_MASK ((1ULL << VALUE_BITS) - 1ULL)
 
-static uint64_t nb_as_ulong(BmNanBox nb) {
+inline static uint64_t nb_as_ulong(BmNanBox nb) {
   uint64_t value;
   memcpy(&value, &nb, sizeof(value));
   return value;
 }
 
-static BmNanBox ulong_as_nb(uint64_t val) {
+inline static BmNanBox ulong_as_nb(uint64_t val) {
   BmNanBox nb;
   memcpy(&nb, &val, sizeof(nb));
   return nb;
