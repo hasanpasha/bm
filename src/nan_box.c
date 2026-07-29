@@ -27,7 +27,7 @@ inline static BmNanBoxType get_type(BmNanBox nb) {
 }
 
 inline static BmNanBox set_type(BmNanBox nb, BmNanBoxType type) {
-  return nb_as_ulong(
+  return ulong_as_nb(
       (nb_as_ulong(nb) & ~TYPE_MASK) |
       (((uint64_t)type & (TYPE_MASK >> VALUE_BITS)) << VALUE_BITS));
 }
