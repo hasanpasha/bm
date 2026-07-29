@@ -3,10 +3,11 @@
 
 #include <stdint.h>
 
+// must never be bigger than 8
 typedef enum BM_NAN_BOX_TYPE {
-  BM_NAN_BOX_TYPE_DOUBLE,
-  BM_NAN_BOX_TYPE_INTEGER,
-  BM_NAN_BOX_TYPE_POINTER,
+  BM_NAN_BOX_TYPE_DOUBLE = 0,
+  BM_NAN_BOX_TYPE_INTEGER = 1,
+  BM_NAN_BOX_TYPE_POINTER = 2,
 } BmNanBoxType;
 
 typedef double BmNanBox;
