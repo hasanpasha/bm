@@ -5,9 +5,9 @@ ifndef BUILD_DIR
 BUILD_DIR=build
 endif
 
-.PHONY: bme basm debasm test_nan_box examples all clean
+.PHONY: bme basm debasm examples all clean
 
-all: bme basm debasm test_nan_box examples
+all: bme basm debasm examples
 
 bme: ${BUILD_DIR}/bme
 
@@ -22,11 +22,6 @@ ${BUILD_DIR}/basm: ${BUILD_DIR}/basm.o ${BUILD_DIR}/bm.o ${BUILD_DIR}/string_vie
 debasm: ${BUILD_DIR}/debasm
 
 ${BUILD_DIR}/debasm: ${BUILD_DIR}/debasm.o ${BUILD_DIR}/bm.o 
-	${CC} ${CFLAGS} -o $@ $^
-
-test_nan_box: ${BUILD_DIR}/test_nan_box
-
-${BUILD_DIR}/test_nan_box: ${BUILD_DIR}/test_nan_box.o ${BUILD_DIR}/nan_box.o 
 	${CC} ${CFLAGS} -o $@ $^
 
 ${BUILD_DIR}/%.o: src/%.c
