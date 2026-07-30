@@ -26,6 +26,11 @@ const char *bm_error_string(BmError error) {
   }
 }
 
+void bm_word_dump(BmWord word, FILE *stream) {
+  fprintf(stream, "u64:%lu i64:%ld f64:%lf ptr:%p", word.u64, word.i64,
+          word.f64, word.ptr);
+}
+
 const char *bm_inst_type_string(BmInstType inst_type) {
   switch (inst_type) {
   case BM_INST_TYPE_HALT:
@@ -63,7 +68,8 @@ void bm_inst_dump(BmInst inst, FILE *stream) {
   fprintf(stream, "INST_%s", bm_inst_type_string(inst.type));
   if (inst.type == BM_INST_TYPE_PUSH || inst.type == BM_INST_TYPE_JUMP ||
       inst.type == BM_INST_TYPE_DUPLICATE) {
-    fprintf(stream, "(%ld)", inst.operand);
+    // TODO: update later
+    fprintf(stream, "(%lu)", inst.operand.u64);
   }
 }
 
@@ -75,8 +81,6 @@ void bm_dump(const Bm *bm, FILE *stream) {
   bm_stack_dump(&bm->stack, stream);
   fprintf(stream, "\n");
 }
-
-/******************************** Utils ********************************/
 
 bool bm_program_load_from_file(BmProgram *prg, const char *file_path) {
   FILE *f = fopen(file_path, "rb");
@@ -103,7 +107,7 @@ bool bm_program_load_from_file(BmProgram *prg, const char *file_path) {
   size_t program_size = file_size / sizeof(BmInst);
 
   if (program_size >= (BM_PROGRAM_CAP)) {
-    fprintf(stderr, "Error: program is too big: %ld\n", program_size);
+    fprintf(stderr, "Error: program is too big: %lu\n", program_size);
     return false;
   }
 
@@ -117,7 +121,7 @@ bool bm_program_load_from_file(BmProgram *prg, const char *file_path) {
   size_t read_insts = fread(prg->ptr, sizeof(BmInst), program_size, f);
   if (read_insts < program_size) {
     fprintf(stderr,
-            "Error: could not load the entire program file '%s' of size %ld.\n",
+            "Error: could not load the entire program file '%s' of size %lu.\n",
             file_path, program_size);
     return false;
   }
@@ -160,12 +164,13 @@ void bm_program_push(BmProgram *prg, BmInst inst) {
   prg->ptr[prg->len++] = inst;
 }
 
-/******************************** Core ********************************/
-
 void bm_stack_dump(const BmStack *stack, FILE *stream) {
   fprintf(stream, "stack: ");
-  for (size_t i = 0; i < stack->idx; i++)
-    fprintf(stream, "%ld ", stack->ptr[i]);
+  for (size_t i = 0; i < stack->idx; i++) {
+    BmWord word = stack->ptr[i];
+    bm_word_dump(word, stream);
+    fputc('\n', stream);
+  }
 }
 
 BmError bm_stack_push(BmStack *stack, BmWord operand) {
@@ -212,11 +217,15 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
   case BM_INST_TYPE_MULTIPLY:
   case BM_INST_TYPE_DIVIDE:
   case BM_INST_TYPE_TEST_EQUALS: {
-    BmWord a, b, result;
-    if ((error = bm_stack_pop(&bm->stack, &b)) != BM_ERROR_OK)
+    BmWord ao, bo;
+    if ((error = bm_stack_pop(&bm->stack, &bo)) != BM_ERROR_OK)
       return error;
-    if ((error = bm_stack_pop(&bm->stack, &a)) != BM_ERROR_OK)
+    if ((error = bm_stack_pop(&bm->stack, &ao)) != BM_ERROR_OK)
       return error;
+
+    uint64_t a = ao.u64;
+    uint64_t b = bo.u64;
+    uint64_t result = 0;
 
     if (inst.type == BM_INST_TYPE_PLUS) {
       result = a + b;
@@ -232,11 +241,12 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
       result = a == b;
     }
 
-    if ((error = bm_stack_push(&bm->stack, result)) != BM_ERROR_OK)
+    if ((error = bm_stack_push(&bm->stack, (BmWord){.u64 = result})) !=
+        BM_ERROR_OK)
       return error;
   } break;
   case BM_INST_TYPE_JUMP:
-    bm->pc = inst.operand;
+    bm->pc = inst.operand.u64;
     break;
   case BM_INST_TYPE_HALT:
     bm->halted = true;
@@ -250,19 +260,20 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
     if ((error = bm_stack_pop(&bm->stack, &top_value)) != BM_ERROR_OK)
       return error;
 
-    if (top_value != 0)
-      bm->pc = inst.operand;
+    if (top_value.u64 != 0)
+      bm->pc = inst.operand.u64;
   } break;
   case BM_INST_TYPE_DEBUG_PRINT: {
     if (bm->stack.idx <= 0)
       return BM_ERROR_STACK_UNDERFLOW;
-    printf("%ld\n", bm->stack.ptr[bm->stack.idx - 1]);
+    bm_word_dump(bm->stack.ptr[bm->stack.idx - 1], stdout);
+    fputc('\n', stdout);
   } break;
   case BM_INST_TYPE_DUPLICATE: {
-    if (inst.operand >= bm->stack.idx)
+    if (inst.operand.u64 >= bm->stack.idx)
       return BM_ERROR_STACK_UNDERFLOW;
 
-    BmWord index = bm->stack.idx - inst.operand - 1;
+    BmInstAddr index = bm->stack.idx - inst.operand.u64 - 1;
     BmWord value = bm->stack.ptr[index];
 
     if ((error = bm_stack_push(&bm->stack, value)) != BM_ERROR_OK)

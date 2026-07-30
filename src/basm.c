@@ -10,11 +10,11 @@
 
 typedef struct BASM_LABEL {
   StringView name;
-  BmWord addr;
+  BmInstAddr addr;
 } BasmLabel;
 
 typedef struct BASM_UNRESOLVED_JMP {
-  BmWord addr;
+  BmInstAddr addr;
   StringView label;
 } BasmDeferredOperand;
 
@@ -26,7 +26,7 @@ typedef struct BASM {
   size_t deferred_operands_len;
 } Basm;
 
-static BmWord basm_find_label(const Basm *basm, StringView name) {
+static uint64_t basm_find_label(const Basm *basm, StringView name) {
   for (size_t i = 0; i < basm->labels_len; i++) {
     BasmLabel label = basm->labels[i];
     if (sv_eq(label.name, name)) {
@@ -38,7 +38,7 @@ static BmWord basm_find_label(const Basm *basm, StringView name) {
   exit(1);
 }
 
-static void basm_push_label(Basm *basm, StringView name, BmWord addr) {
+static void basm_push_label(Basm *basm, StringView name, BmInstAddr addr) {
   assert(basm->labels_len < BASM_LABELS_CAP);
   basm->labels[basm->labels_len++] = (BasmLabel){
       .name = name,
@@ -46,7 +46,7 @@ static void basm_push_label(Basm *basm, StringView name, BmWord addr) {
   };
 }
 
-static void basm_push_deferred_operand(Basm *basm, BmWord addr,
+static void basm_push_deferred_operand(Basm *basm, BmInstAddr addr,
                                        StringView label) {
   assert(basm->deferred_operands_len < BASM_DEFERRED_OPERANDS_CAP);
   basm->deferred_operands[basm->deferred_operands_len++] =
@@ -91,20 +91,20 @@ static void basm_translate_source(Basm *basm, StringView source) {
       inst.type = BM_INST_TYPE_NO_OPERATION;
     } else if (sv_eq(inst_name, sv_from_cstr("push"))) {
       inst.type = BM_INST_TYPE_PUSH;
-      inst.operand = sv_parse_ulong(operand);
+      inst.operand.u64 = sv_parse_ulong(operand);
     } else if (sv_eq(inst_name, sv_from_cstr("dup"))) {
       inst.type = BM_INST_TYPE_DUPLICATE;
-      inst.operand = sv_parse_ulong(operand);
+      inst.operand.u64 = sv_parse_ulong(operand);
     } else if (sv_eq(inst_name, sv_from_cstr("jmp"))) {
       inst.type = BM_INST_TYPE_JUMP;
       if (isdigit(operand.ptr[0])) {
-        inst.operand = sv_parse_ulong(operand);
+        inst.operand.u64 = sv_parse_ulong(operand);
       } else {
         basm_push_deferred_operand(basm, basm->prg.len, operand);
       }
     } else if (sv_eq(inst_name, sv_from_cstr("jt"))) {
       inst.type = BM_INST_TYPE_JMP_IF_TRUE;
-      inst.operand = sv_parse_ulong(operand);
+      inst.operand.u64 = sv_parse_ulong(operand);
     } else if (sv_eq(inst_name, sv_from_cstr("plus"))) {
       inst.type = BM_INST_TYPE_PLUS;
     } else if (sv_eq(inst_name, sv_from_cstr("dump"))) {
@@ -124,8 +124,8 @@ static void basm_translate_source(Basm *basm, StringView source) {
 
   for (size_t i = 0; i < basm->deferred_operands_len; i++) {
     BasmDeferredOperand jmp = basm->deferred_operands[i];
-    BmWord addr = basm_find_label(basm, jmp.label);
-    basm->prg.ptr[jmp.addr].operand = addr;
+    uint64_t addr = basm_find_label(basm, jmp.label);
+    basm->prg.ptr[jmp.addr].operand.u64 = addr;
   }
 }
 

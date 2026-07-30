@@ -1,6 +1,7 @@
 #ifndef BM_H
 #define BM_H
 
+#include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -30,7 +31,18 @@ const char *bm_error_string(BmError error);
 #define BM_STACK_CAP 1024
 #define BM_PROGRAM_CAP 1024
 
-typedef uint64_t BmWord;
+typedef uint64_t BmInstAddr;
+
+typedef union BM_WORD {
+  uint64_t u64;
+  int64_t i64;
+  double f64;
+  void *ptr;
+} BmWord;
+
+static_assert(sizeof(BmWord) == 8, "BmWord is expected to be 8 bytes.");
+
+void bm_word_dump(BmWord word, FILE *stream);
 
 typedef enum BM_INST_TYPE {
   BM_INST_TYPE_NO_OPERATION,
@@ -59,7 +71,7 @@ void bm_inst_dump(BmInst inst, FILE *stream);
 
 typedef struct BM_STACK {
   BmWord ptr[BM_STACK_CAP];
-  BmWord idx;
+  uint64_t idx;
 } BmStack;
 
 void bm_stack_dump(const BmStack *stack, FILE *stream);
@@ -70,7 +82,7 @@ BmError bm_stack_pop(BmStack *stack, BmWord *operand_out);
 
 typedef struct BM_PROGRAM {
   BmInst ptr[BM_PROGRAM_CAP];
-  BmWord len;
+  uint64_t len;
 } BmProgram;
 
 bool bm_program_load_from_file(BmProgram *prg, const char *file_path);
@@ -82,7 +94,7 @@ void bm_program_push(BmProgram *prg, BmInst inst);
 typedef struct BM {
   BmStack stack;
   BmProgram program;
-  BmWord pc;
+  BmInstAddr pc;
   bool halted;
 } Bm;
 

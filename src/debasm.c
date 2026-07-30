@@ -19,7 +19,7 @@ int main(int argc, char const *argv[]) {
     return EXIT_FAILURE;
   }
 
-  for (BmWord i = 0; i < prg.len; i++) {
+  for (uint64_t i = 0; i < prg.len; i++) {
     BmInst inst = prg.ptr[i];
     switch (inst.type) {
     case BM_INST_TYPE_NO_OPERATION:
@@ -29,7 +29,7 @@ int main(int argc, char const *argv[]) {
       printf("hlt\n");
       break;
     case BM_INST_TYPE_PUSH:
-      printf("push %zu\n", inst.operand);
+      printf("push %lu\n", inst.operand.u64);
       break;
     case BM_INST_TYPE_PLUS:
       printf("plus\n");
@@ -44,13 +44,13 @@ int main(int argc, char const *argv[]) {
       printf("div\n");
       break;
     case BM_INST_TYPE_JUMP:
-      printf("jmp %zu\n", inst.operand);
+      printf("jmp %lu\n", inst.operand.u64);
       break;
     case BM_INST_TYPE_DROP:
       printf("drop\n");
       break;
     case BM_INST_TYPE_JMP_IF_TRUE:
-      printf("jt %zu\n", inst.operand);
+      printf("jt %lu\n", inst.operand.u64);
       break;
     case BM_INST_TYPE_TEST_EQUALS:
       printf("teq\n");
@@ -59,7 +59,7 @@ int main(int argc, char const *argv[]) {
       printf("dump\n");
       break;
     case BM_INST_TYPE_DUPLICATE:
-      printf("dup %zu\n", inst.operand);
+      printf("dup %lu\n", inst.operand.u64);
       break;
     }
   }
