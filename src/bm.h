@@ -406,8 +406,6 @@ BmError bm_stack_set(BmStack *stack, size_t offset, BmWord operand) {
 
   if (idx < 0)
     return BM_ERROR_STACK_UNDERFLOW;
-  if (idx >= BM_STACK_CAP)
-    return BM_ERROR_STACK_OVERFLOW;
 
   stack->ptr[(size_t)idx] = operand;
 
@@ -419,8 +417,6 @@ BmError bm_stack_get(BmStack *stack, size_t offset, BmWord *operand_out) {
 
   if (idx < 0)
     return BM_ERROR_STACK_UNDERFLOW;
-  if (idx >= BM_STACK_CAP)
-    return BM_ERROR_STACK_OVERFLOW;
 
   if (operand_out != NULL)
     *operand_out = stack->ptr[(size_t)idx];
