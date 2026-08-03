@@ -1,0 +1,18 @@
+# sum (1/n!)
+
+    push 1.0f64     # 0
+    push 1.0f64     # n!
+loop:
+    swap
+    push 1.0f64
+    dup 2
+    divf
+    plusf
+    swap
+    dup 0
+    push 1.0f64
+    plusf
+    multf
+    # dump
+    jmp loop
+    hlt

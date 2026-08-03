@@ -1,0 +1,5 @@
+push 22.0f64
+push 7.0f64
+divf
+dump
+hlt

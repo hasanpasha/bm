@@ -7,7 +7,7 @@
         push 1
 loop:   dup 1 # the loop
         dup 1
-        plus
+        plusf
         dump
         jmp loop   # repeat
         hlt
