@@ -102,35 +102,41 @@ static void basm_translate_source(Basm *basm, StringView source) {
 
     StringView operand = sv_trim(sv_chop_by_delim(&line, '#'));
 
+#define TRY_PARSE_NO_OP_INST(bm_type)                                          \
+  if (sv_eq(inst_name, sv_from_cstr(bm_inst_type_readable_name(bm_type))))     \
+    inst.type = bm_type;
+
     BmInst inst = {0};
-    if (sv_eq(inst_name, sv_from_cstr("nop"))) {
-      inst.type = BM_INST_TYPE_NO_OPERATION;
-    } else if (sv_eq(inst_name, sv_from_cstr("push"))) {
+    TRY_PARSE_NO_OP_INST(BM_INST_TYPE_NO_OPERATION)
+    else if (sv_eq(inst_name, sv_from_cstr("push"))) {
       inst.type = BM_INST_TYPE_PUSH;
       inst.operand = basm_parse_word(operand);
     }
     else if (sv_eq(inst_name, sv_from_cstr("dup"))) {
       inst.type = BM_INST_TYPE_DUPLICATE;
       inst.operand.u64 = sv_parse_ulong(operand);
-    } else if (sv_eq(inst_name, sv_from_cstr("jmp"))) {
+    }
+    else if (sv_eq(inst_name, sv_from_cstr("jmp"))) {
       inst.type = BM_INST_TYPE_JUMP;
       if (isdigit(operand.ptr[0])) {
         inst.operand.u64 = sv_parse_ulong(operand);
       } else {
         basm_push_deferred_operand(basm, basm->prg.len, operand);
       }
-    } else if (sv_eq(inst_name, sv_from_cstr("jt"))) {
-      inst.type = BM_INST_TYPE_JMP_IF_TRUE;
-      inst.operand.u64 = sv_parse_ulong(operand);
-    } else if (sv_eq(inst_name, sv_from_cstr("plus"))) {
-      inst.type = BM_INST_TYPE_PLUS;
-    } else if (sv_eq(inst_name, sv_from_cstr("dump"))) {
-      inst.type = BM_INST_TYPE_DEBUG_PRINT;
-    } else if (sv_eq(inst_name, sv_from_cstr("teq"))) {
-      inst.type = BM_INST_TYPE_TEST_EQUALS;
-    } else if (sv_eq(inst_name, sv_from_cstr("hlt"))) {
-      inst.type = BM_INST_TYPE_HALT;
-    } else {
+    }
+    else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_PLUS_INT)           //
+        else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_MINUS_INT)      //
+        else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_MULTIPLY_INT)   //
+        else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_DIVIDE_INT)     //
+        else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_PLUS_FLOAT)     //
+        else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_MINUS_FLOAT)    //
+        else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_MULTIPLY_FLOAT) //
+        else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_DIVIDE_FLOAT)   //
+        else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_DEBUG_PRINT)    //
+        else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_TEST_EQUALS)    //
+        else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_HALT)           //
+        else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_SWAP)           //
+        else {
       fprintf(stderr, "Error: unknown instruction '" SV "'\n",
               SV_ARG(inst_name));
       exit(1);
@@ -144,6 +150,8 @@ static void basm_translate_source(Basm *basm, StringView source) {
     uint64_t addr = basm_find_label(basm, jmp.label);
     basm->prg.ptr[jmp.addr].operand.u64 = addr;
   }
+
+#undef TRY_PARSE_NO_OP_INST
 }
 
 static bool basm_assemble_file(Basm *basm, const char *input_path,
