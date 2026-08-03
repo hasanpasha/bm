@@ -5,6 +5,9 @@
 #include "string_view.h"
 #include <bm.h>
 
+#define STRING_VIEW_IMPLEMENTATION
+#include <string_view.h>
+
 #define BASM_LABELS_CAP 1024
 #define BASM_DEFERRED_OPERANDS_CAP 1024
 
@@ -72,10 +75,8 @@ static void basm_translate_source(Basm *basm, StringView source) {
     line = sv_ltrim(line);
     StringView inst_name = sv_chop_by_delim(&line, ' ');
 
-    if (sv_ends_with(inst_name, sv_from_cstr(":"))) {
-      StringView label = sv_slice(inst_name, 0, -1);
-
-      basm_push_label(basm, label, basm->prg.len);
+    if (sv_chop_right(&inst_name, sv_from_cstr(":"))) {
+      basm_push_label(basm, inst_name, basm->prg.len);
 
       line = sv_ltrim(line);
       inst_name = sv_chop_by_delim(&line, ' ');

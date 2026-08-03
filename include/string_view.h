@@ -1,3 +1,50 @@
+#ifndef STRING_VIEW_H
+#define STRING_VIEW_H
+
+#include <stdbool.h>
+#include <sys/types.h>
+
+typedef struct STRING_VIEW {
+  const char *ptr;
+  size_t len;
+} StringView;
+
+#define SV "%.*s"
+#define SV_ARG(sv) (int)sv.len, sv.ptr
+
+StringView sv_from_cstr(const char *str);
+
+const char *sv_to_cstr(StringView sv, char *buffer, size_t cap);
+
+StringView sv_ltrim(StringView sv);
+
+StringView sv_rtrim(StringView sv);
+
+StringView sv_trim(StringView sv);
+
+StringView sv_chop_by_delim(StringView *sv, char delim);
+
+bool sv_eq(StringView a, StringView b);
+
+bool sv_is_blank(StringView sv);
+
+bool sv_begins_with(StringView sv, StringView slice);
+
+bool sv_ends_with(StringView sv, StringView slice);
+
+bool sv_chop_right(StringView *sv, StringView slice);
+
+signed long int sv_parse_long(StringView sv);
+
+unsigned long int sv_parse_ulong(StringView sv);
+
+double sv_parse_double(StringView sv);
+
+StringView sv_read_file(const char *file_path);
+
+#ifdef STRING_VIEW_IMPLEMENTATION
+
+#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -14,29 +61,6 @@ StringView sv_from_cstr(const char *str) {
   };
 }
 
-StringView sv_slice(StringView sv, size_t begin, ssize_t end) {
-
-  size_t len = 0;
-  if (end < 0) {
-    if (labs(end) <= sv.len) {
-      len = sv.len + end;
-    }
-  } else if (end > 0) {
-    len = (size_t)end;
-  }
-
-  if (begin > len) {
-    len = 0;
-  } else {
-    len -= begin;
-  }
-
-  return (StringView){
-      .ptr = sv.ptr + begin,
-      .len = len,
-  };
-}
-
 StringView sv_ltrim(StringView sv) {
   size_t i = 0;
   while (i < sv.len && isspace(sv.ptr[i]))
@@ -45,10 +69,10 @@ StringView sv_ltrim(StringView sv) {
 }
 
 StringView sv_rtrim(StringView sv) {
-  size_t i = sv.len - 1;
-  while (i > 0 && isspace(sv.ptr[i]))
+  size_t i = sv.len;
+  while (i > 0 && isspace(sv.ptr[i - 1]))
     i--;
-  return (StringView){.ptr = sv.ptr, .len = i + 1};
+  return (StringView){.ptr = sv.ptr, .len = i};
 }
 
 StringView sv_trim(StringView sv) { return sv_rtrim(sv_ltrim(sv)); }
@@ -100,12 +124,44 @@ bool sv_ends_with(StringView sv, StringView slice) {
   return true;
 }
 
-unsigned long sv_parse_ulong(StringView sv) {
-  unsigned long result = 0;
-  for (size_t i = 0; i < sv.len && isdigit(sv.ptr[i]); i++) {
-    result = (result * 10) + (size_t)(sv.ptr[i] - '0');
-  }
+bool sv_chop_right(StringView *sv, StringView slice) {
+  if (!sv_ends_with(*sv, slice))
+    return false;
 
+  sv->len -= slice.len;
+  return true;
+}
+
+#define BUFFER_CAP 1024
+static char buffer[BUFFER_CAP];
+
+const char *sv_to_cstr(StringView sv, char *buffer, size_t cap) {
+  assert(sv.len < cap);
+  memcpy(buffer, sv.ptr, sv.len);
+  buffer[sv.len] = '\0';
+  return buffer;
+}
+
+signed long int sv_parse_long(StringView sv) {
+  char *endptr = NULL;
+  const signed long result =
+      strtol(sv_to_cstr(sv, buffer, BUFFER_CAP), &endptr, 10);
+  assert((size_t)(endptr - buffer) == sv.len);
+  return result;
+}
+
+unsigned long int sv_parse_ulong(StringView sv) {
+  char *endptr = NULL;
+  const unsigned long result =
+      strtoul(sv_to_cstr(sv, buffer, BUFFER_CAP), &endptr, 10);
+  assert((size_t)(endptr - buffer) == sv.len);
+  return result;
+}
+
+double sv_parse_double(StringView sv) {
+  char *endptr = NULL;
+  const double result = strtod(sv_to_cstr(sv, buffer, BUFFER_CAP), &endptr);
+  assert((size_t)(endptr - buffer) == sv.len);
   return result;
 }
 
@@ -166,3 +222,7 @@ StringView sv_read_file(const char *file_path) {
 
   return sv;
 }
+
+#endif
+
+#endif
