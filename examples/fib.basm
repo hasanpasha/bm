@@ -1,13 +1,9 @@
 # first two fibonacci numbers
-        jmp 1
-        nop
-        nop
-        nop
         push 0
         push 1
-loop:   dup 1 # the loop
-        dup 1
+loop:   dup 0           # the loop
+        swap 2
         plusf
         dump
-        jmp loop   # repeat
+        jmp loop        # repeat
         hlt
