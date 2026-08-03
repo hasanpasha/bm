@@ -1,0 +1,30 @@
+# sum (1/n!)
+# 1/1 + 1/1 + 1(1 * 2) + 1(1 * 2 * 3) + ...
+    push 1.0f64     # n
+    push 1.0f64     # n!
+    push 1.0f64     # sum
+loop:
+    dump
+    push 1.0f64
+    dup 2
+    divf
+    plusf 
+
+    swap 2
+    push 1.0f64
+    plusf
+    dup 0
+    swap 2
+    multf
+
+    swap 1
+    swap 2
+
+    dup 2
+    push 2f64
+    teq
+    not
+
+    jt loop
+
+    hlt
