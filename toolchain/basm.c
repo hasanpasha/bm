@@ -124,6 +124,18 @@ static void basm_translate_source(Basm *basm, StringView source) {
         basm_push_deferred_operand(basm, basm->prg.len, operand);
       }
     }
+    else if (sv_eq(inst_name, sv_from_cstr("jt"))) {
+      inst.type = BM_INST_TYPE_JMP_IF_TRUE;
+      if (isdigit(operand.ptr[0])) {
+        inst.operand.u64 = sv_parse_ulong(operand);
+      } else {
+        basm_push_deferred_operand(basm, basm->prg.len, operand);
+      }
+    }
+    else if (sv_eq(inst_name, sv_from_cstr("swap"))) {
+      inst.type = BM_INST_TYPE_SWAP;
+      inst.operand.u64 = sv_parse_ulong(operand);
+    }
     else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_PLUS_INT)           //
         else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_MINUS_INT)      //
         else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_MULTIPLY_INT)   //

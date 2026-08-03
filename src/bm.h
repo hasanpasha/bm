@@ -203,10 +203,9 @@ const char *bm_inst_type_readable_name(BmInstType inst_type) {
 bool bm_inst_type_has_operand(BmInstType inst_type) {
   switch (inst_type) {
   case BM_INST_TYPE_PUSH:
-    return true;
   case BM_INST_TYPE_JUMP:
-    return true;
   case BM_INST_TYPE_DUPLICATE:
+  case BM_INST_TYPE_SWAP:
     return true;
   case BM_INST_TYPE_NO_OPERATION:
   case BM_INST_TYPE_HALT:
@@ -544,14 +543,15 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
   case BM_INST_TYPE_NO_OPERATION:
     break;
   case BM_INST_TYPE_SWAP: {
+    uint64_t idx = inst.operand.u64;
     BmWord a, b;
     if ((error = bm_stack_get(&bm->stack, 0, &a)) != BM_ERROR_OK)
       return error;
-    if ((error = bm_stack_get(&bm->stack, 1, &b)) != BM_ERROR_OK)
+    if ((error = bm_stack_get(&bm->stack, idx, &b)) != BM_ERROR_OK)
       return error;
     if ((error = bm_stack_set(&bm->stack, 0, b)) != BM_ERROR_OK)
       return error;
-    if ((error = bm_stack_set(&bm->stack, 1, a)) != BM_ERROR_OK)
+    if ((error = bm_stack_set(&bm->stack, idx, a)) != BM_ERROR_OK)
       return error;
   } break;
   case BM_NUM_OF_INST_TYPES:
