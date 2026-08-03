@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define BM_IMPLEMENTATION
 #include <bm.h>
 
 BmProgram prg = {0};
@@ -21,47 +22,12 @@ int main(int argc, char const *argv[]) {
 
   for (uint64_t i = 0; i < prg.len; i++) {
     BmInst inst = prg.ptr[i];
-    switch (inst.type) {
-    case BM_INST_TYPE_NO_OPERATION:
-      printf("nop\n");
-      break;
-    case BM_INST_TYPE_HALT:
-      printf("hlt\n");
-      break;
-    case BM_INST_TYPE_PUSH:
-      printf("push %lu\n", inst.operand.u64);
-      break;
-    case BM_INST_TYPE_PLUS:
-      printf("plus\n");
-      break;
-    case BM_INST_TYPE_MINUS:
-      printf("minus\n");
-      break;
-    case BM_INST_TYPE_MULTIPLY:
-      printf("mult\n");
-      break;
-    case BM_INST_TYPE_DIVIDE:
-      printf("div\n");
-      break;
-    case BM_INST_TYPE_JUMP:
-      printf("jmp %lu\n", inst.operand.u64);
-      break;
-    case BM_INST_TYPE_DROP:
-      printf("drop\n");
-      break;
-    case BM_INST_TYPE_JMP_IF_TRUE:
-      printf("jt %lu\n", inst.operand.u64);
-      break;
-    case BM_INST_TYPE_TEST_EQUALS:
-      printf("teq\n");
-      break;
-    case BM_INST_TYPE_DEBUG_PRINT:
-      printf("dump\n");
-      break;
-    case BM_INST_TYPE_DUPLICATE:
-      printf("dup %lu\n", inst.operand.u64);
-      break;
+
+    printf("%s", bm_inst_type_readable_name(inst.type));
+    if (bm_inst_type_has_operand(inst.type)) {
+      printf(" %ld", inst.operand.i64);
     }
+    putchar('\n');
   }
 
   return EXIT_SUCCESS;

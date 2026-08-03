@@ -2,7 +2,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 
-#include "string_view.h"
+#define BM_IMPLEMENTATION
 #include <bm.h>
 
 #define STRING_VIEW_IMPLEMENTATION

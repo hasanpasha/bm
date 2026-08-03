@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define BM_IMPLEMENTATION
 #include <bm.h>
 
 Bm bm = {0};
