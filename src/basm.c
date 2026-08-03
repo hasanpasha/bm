@@ -59,6 +59,21 @@ static void basm_push_deferred_operand(Basm *basm, BmInstAddr addr,
       };
 }
 
+static BmWord basm_parse_word(StringView sv) {
+  sv = sv_trim(sv);
+  BmWord word;
+  if (sv_chop_right(&sv, sv_from_cstr("u64"))) {
+    word.u64 = sv_parse_ulong(sv);
+  } else if (sv_chop_right(&sv, sv_from_cstr("i64"))) {
+    word.i64 = sv_parse_long(sv);
+  } else if (sv_chop_right(&sv, sv_from_cstr("f64"))) {
+    word.f64 = sv_parse_double(sv);
+  } else {
+    word.u64 = sv_parse_ulong(sv);
+  }
+  return word;
+}
+
 static void basm_translate_source(Basm *basm, StringView source) {
   basm->prg.len = 0;
   while (!sv_is_blank(source)) {
@@ -92,8 +107,9 @@ static void basm_translate_source(Basm *basm, StringView source) {
       inst.type = BM_INST_TYPE_NO_OPERATION;
     } else if (sv_eq(inst_name, sv_from_cstr("push"))) {
       inst.type = BM_INST_TYPE_PUSH;
-      inst.operand.u64 = sv_parse_ulong(operand);
-    } else if (sv_eq(inst_name, sv_from_cstr("dup"))) {
+      inst.operand = basm_parse_word(operand);
+    }
+    else if (sv_eq(inst_name, sv_from_cstr("dup"))) {
       inst.type = BM_INST_TYPE_DUPLICATE;
       inst.operand.u64 = sv_parse_ulong(operand);
     } else if (sv_eq(inst_name, sv_from_cstr("jmp"))) {
