@@ -17,7 +17,7 @@ static char *shift(int *argc, char ***argv) {
 }
 
 static void usage(FILE *stream, const char *program) {
-  fprintf(stream, "Usage: %s <input.bm> [-h] [-l limit]\n", program);
+  fprintf(stream, "Usage: %s <input.bm> [-h] [-l limit] [-d]\n", program);
 }
 
 int main(int argc, char *argv[]) {
@@ -25,6 +25,7 @@ int main(int argc, char *argv[]) {
 
   char *input_file = NULL;
   int limit = -1;
+  bool debug = false;
 
   char *arg = NULL;
   while ((arg = shift(&argc, &argv)) != NULL) {
@@ -43,6 +44,8 @@ int main(int argc, char *argv[]) {
         }
 
         limit = (int)strtol(limit_arg, NULL, 10);
+      } else if (strncmp(flag, "d", 1) == 0) {
+        debug = true;
       } else {
         usage(stderr, program);
         fprintf(stderr, "Error: unknown flag '%s'\n", flag);
@@ -70,12 +73,37 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
-  BmError error = bm_execute_program(&bm, limit);
-  if (error != BM_ERROR_OK) {
-    fprintf(stderr, "Error: %s\n", bm_error_string(error));
-    bm_stack_dump(&bm.stack, stderr);
-    fprintf(stderr, "\n");
-    return EXIT_FAILURE;
+  if (!debug) {
+    BmError error = bm_execute_program(&bm, limit);
+    if (error != BM_ERROR_OK) {
+      fprintf(stderr, "Error: %s\n", bm_error_string(error));
+      bm_stack_dump(&bm.stack, stderr);
+      return EXIT_FAILURE;
+    }
+  } else {
+    BmError error = BM_ERROR_OK;
+    BmInst inst = {0};
+
+    while (!bm.halted && limit != 0) {
+
+      if ((error = bm_fetch_inst(&bm, &inst)) != BM_ERROR_OK) {
+        fprintf(stderr, "Error: %s\n", bm_error_string(error));
+        return EXIT_FAILURE;
+      }
+      bm_inst_dump(inst, stdout);
+      printf("\n");
+      bm_stack_dump(&bm.stack, stdout);
+
+      (void)fgetc(stdin);
+      if ((error = bm_execute_inst(&bm, inst)) != BM_ERROR_OK) {
+        fprintf(stderr, "Error: %s\n", bm_error_string(error));
+        bm_stack_dump(&bm.stack, stderr);
+        return EXIT_FAILURE;
+      }
+
+      if (limit > 0)
+        limit--;
+    }
   }
 
   return EXIT_SUCCESS;
