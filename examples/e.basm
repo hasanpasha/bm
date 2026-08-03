@@ -22,7 +22,7 @@ loop:
 
     dup 2
     push 2f64
-    teq
+    eq
     not
 
     jt loop

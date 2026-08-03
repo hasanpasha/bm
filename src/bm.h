@@ -188,7 +188,7 @@ const char *bm_inst_type_readable_name(BmInstType inst_type) {
   case BM_INST_TYPE_JMP_IF_TRUE:
     return "jt";
   case BM_INST_TYPE_TEST_EQUALS:
-    return "teq";
+    return "eq";
   case BM_INST_TYPE_DEBUG_PRINT:
     return "dump";
   case BM_INST_TYPE_DUPLICATE:
