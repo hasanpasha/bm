@@ -511,14 +511,13 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
       return error;
   } break;
   case BM_INST_TYPE_TEST_EQUALS: {
-    BmWord ao, bo;
+    BmWord ao, bo, result;
     if ((error = bm_stack_pop(&bm->stack, &bo)) != BM_ERROR_OK)
       return error;
     if ((error = bm_stack_pop(&bm->stack, &ao)) != BM_ERROR_OK)
       return error;
-
-    if ((error = bm_stack_push(&bm->stack, (BmWord){.u64 = ao.u64 == bo.u64}) !=
-                 BM_ERROR_OK))
+    result.u64 = ao.u64 == bo.u64;
+    if ((error = bm_stack_push(&bm->stack, result) != BM_ERROR_OK))
       return error;
   } break;
   case BM_INST_TYPE_JUMP:
@@ -531,7 +530,6 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
     BmWord top_value;
     if ((error = bm_stack_pop(&bm->stack, &top_value)) != BM_ERROR_OK)
       return error;
-
     if (top_value.u64 != 0)
       bm->pc = inst.operand.u64;
   } break;
@@ -542,13 +540,10 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
     fputc('\n', stdout);
   } break;
   case BM_INST_TYPE_DUPLICATE: {
-    if (inst.operand.u64 >= bm->stack.idx)
-      return BM_ERROR_STACK_UNDERFLOW;
-
-    BmInstAddr index = bm->stack.idx - inst.operand.u64 - 1;
-    BmWord value = bm->stack.ptr[index];
-
-    if ((error = bm_stack_push(&bm->stack, value)) != BM_ERROR_OK)
+    BmWord x;
+    if ((error = bm_stack_get(&bm->stack, inst.operand.u64, &x)) != BM_ERROR_OK)
+      return error;
+    if ((error = bm_stack_push(&bm->stack, x)) != BM_ERROR_OK)
       return error;
   } break;
   case BM_INST_TYPE_NO_OPERATION:
