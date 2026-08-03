@@ -63,6 +63,7 @@ typedef enum BM_INST_TYPE {
   BM_INST_TYPE_DEBUG_PRINT,
   BM_INST_TYPE_DUPLICATE,
   BM_INST_TYPE_SWAP,
+  BM_INST_TYPE_NOT,
   BM_NUM_OF_INST_TYPES,
 } BmInstType;
 
@@ -194,6 +195,8 @@ const char *bm_inst_type_readable_name(BmInstType inst_type) {
     return "dup";
   case BM_INST_TYPE_SWAP:
     return "swap";
+  case BM_INST_TYPE_NOT:
+    return "not";
   case BM_NUM_OF_INST_TYPES:
   default:
     BM_UNREACHABLE();
@@ -220,7 +223,7 @@ bool bm_inst_type_has_operand(BmInstType inst_type) {
   case BM_INST_TYPE_JMP_IF_TRUE:
   case BM_INST_TYPE_TEST_EQUALS:
   case BM_INST_TYPE_DEBUG_PRINT:
-  case BM_INST_TYPE_SWAP:
+  case BM_INST_TYPE_NOT:
     return false;
   case BM_NUM_OF_INST_TYPES:
   default:
@@ -264,6 +267,8 @@ const char *bm_inst_type_string(BmInstType inst_type) {
     return "DUPLICATE";
   case BM_INST_TYPE_SWAP:
     return "SWAP";
+  case BM_INST_TYPE_NOT:
+    return "NOT";
   case BM_NUM_OF_INST_TYPES:
   default:
     BM_UNREACHABLE();
@@ -552,6 +557,14 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
     if ((error = bm_stack_set(&bm->stack, 0, b)) != BM_ERROR_OK)
       return error;
     if ((error = bm_stack_set(&bm->stack, idx, a)) != BM_ERROR_OK)
+      return error;
+  } break;
+  case BM_INST_TYPE_NOT: {
+    BmWord x;
+    if ((error = bm_stack_get(&bm->stack, 0, &x)) != BM_ERROR_OK)
+      return error;
+    x.u64 = !x.u64;
+    if ((error = bm_stack_set(&bm->stack, 0, x)) != BM_ERROR_OK)
       return error;
   } break;
   case BM_NUM_OF_INST_TYPES:
