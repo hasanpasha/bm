@@ -1,10 +1,10 @@
-CFLAGS:=-std=c23 -Wall -Wextra -Wswitch-enum -Wmissing-prototypes -pedantic -Iinclude
+CFLAGS:=-std=c23 -Wall -Wextra -Wswitch-enum -Wmissing-prototypes -pedantic -Isrc
 
 ifndef BUILD_DIR
 BUILD_DIR:=build
 endif
 
-TOOLCHAIN:=$(patsubst src/%.c,$(BUILD_DIR)/toolchain/%,$(wildcard src/*.c))
+TOOLCHAIN:=$(patsubst toolchain/%.c,$(BUILD_DIR)/toolchain/%,$(wildcard toolchain/*.c))
 EXAMPLES:=$(patsubst examples/%.basm,$(BUILD_DIR)/examples/%.bm,$(wildcard examples/*.basm))
 
 .PHONY: all toolchain examples clean
@@ -13,7 +13,7 @@ all: toolchain examples
 
 toolchain: $(TOOLCHAIN)
 
-$(BUILD_DIR)/toolchain/%: src/%.c | $(BUILD_DIR)/toolchain
+$(BUILD_DIR)/toolchain/%: toolchain/%.c | $(BUILD_DIR)/toolchain
 	$(CC) $(CFLAGS) -o $@ $<
 
 $(BUILD_DIR)/toolchain:
