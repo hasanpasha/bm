@@ -60,6 +60,7 @@ typedef enum BM_INST_TYPE {
   BM_INST_TYPE_JUMP,
   BM_INST_TYPE_JMP_IF_TRUE,
   BM_INST_TYPE_TEST_EQUALS,
+  BM_INST_TYPE_TEST_GREATER_EQUALS_FLOAT,
   BM_INST_TYPE_DEBUG_PRINT,
   BM_INST_TYPE_DUPLICATE,
   BM_INST_TYPE_SWAP,
@@ -189,6 +190,8 @@ const char *bm_inst_type_readable_name(BmInstType inst_type) {
     return "jt";
   case BM_INST_TYPE_TEST_EQUALS:
     return "eq";
+  case BM_INST_TYPE_TEST_GREATER_EQUALS_FLOAT:
+    return "gef";
   case BM_INST_TYPE_DEBUG_PRINT:
     return "dump";
   case BM_INST_TYPE_DUPLICATE:
@@ -222,6 +225,7 @@ bool bm_inst_type_has_operand(BmInstType inst_type) {
   case BM_INST_TYPE_DIVIDE_FLOAT:
   case BM_INST_TYPE_JMP_IF_TRUE:
   case BM_INST_TYPE_TEST_EQUALS:
+  case BM_INST_TYPE_TEST_GREATER_EQUALS_FLOAT:
   case BM_INST_TYPE_DEBUG_PRINT:
   case BM_INST_TYPE_NOT:
     return false;
@@ -261,6 +265,8 @@ const char *bm_inst_type_string(BmInstType inst_type) {
     return "JMP_IF_TRUE";
   case BM_INST_TYPE_TEST_EQUALS:
     return "TEST_EQUALS";
+  case BM_INST_TYPE_TEST_GREATER_EQUALS_FLOAT:
+    return "TEST_GREATER_EQUALS_FLOAT";
   case BM_INST_TYPE_DEBUG_PRINT:
     return "DEBUG_PRINT";
   case BM_INST_TYPE_DUPLICATE:
@@ -565,6 +571,16 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
       return error;
     x.u64 = !x.u64;
     if ((error = bm_stack_set(&bm->stack, 0, x)) != BM_ERROR_OK)
+      return error;
+  } break;
+  case BM_INST_TYPE_TEST_GREATER_EQUALS_FLOAT: {
+    BmWord ao, bo, result;
+    if ((error = bm_stack_pop(&bm->stack, &bo)) != BM_ERROR_OK)
+      return error;
+    if ((error = bm_stack_pop(&bm->stack, &ao)) != BM_ERROR_OK)
+      return error;
+    result.u64 = bo.f64 >= ao.f64;
+    if ((error = bm_stack_push(&bm->stack, result) != BM_ERROR_OK))
       return error;
   } break;
   case BM_NUM_OF_INST_TYPES:

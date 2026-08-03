@@ -136,18 +136,19 @@ static void basm_translate_source(Basm *basm, StringView source) {
       inst.type = BM_INST_TYPE_SWAP;
       inst.operand.u64 = sv_parse_ulong(operand);
     }
-    else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_PLUS_INT)           //
-        else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_MINUS_INT)      //
-        else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_MULTIPLY_INT)   //
-        else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_DIVIDE_INT)     //
-        else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_PLUS_FLOAT)     //
-        else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_MINUS_FLOAT)    //
-        else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_MULTIPLY_FLOAT) //
-        else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_DIVIDE_FLOAT)   //
-        else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_DEBUG_PRINT)    //
-        else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_TEST_EQUALS)    //
-        else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_HALT)           //
-        else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_NOT)            //
+    else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_PLUS_INT)                      //
+        else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_MINUS_INT)                 //
+        else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_MULTIPLY_INT)              //
+        else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_DIVIDE_INT)                //
+        else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_PLUS_FLOAT)                //
+        else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_MINUS_FLOAT)               //
+        else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_MULTIPLY_FLOAT)            //
+        else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_DIVIDE_FLOAT)              //
+        else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_DEBUG_PRINT)               //
+        else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_TEST_EQUALS)               //
+        else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_HALT)                      //
+        else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_NOT)                       //
+        else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_TEST_GREATER_EQUALS_FLOAT) //
         else {
       fprintf(stderr, "Error: unknown instruction '" SV "'\n",
               SV_ARG(inst_name));

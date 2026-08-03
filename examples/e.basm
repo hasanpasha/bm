@@ -4,7 +4,6 @@
     push 1.0f64     # n!
     push 1.0f64     # sum
 loop:
-    dump
     push 1.0f64
     dup 2
     divf
@@ -21,10 +20,10 @@ loop:
     swap 2
 
     dup 2
-    push 2f64
-    eq
-    not
+    push 69f64
+    gef
 
     jt loop
 
+    dump
     hlt
