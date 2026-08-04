@@ -31,6 +31,7 @@ const char *bm_error_string(BmError error);
 
 #define BM_STACK_CAP 1024
 #define BM_PROGRAM_CAP 1024
+#define BM_NATIVE_FUNCS_CAP 1024
 
 typedef uint64_t BmInstAddr;
 
@@ -110,12 +111,24 @@ bool bm_program_save_to_file(const BmProgram *prg, const char *file_path);
 
 void bm_program_push(BmProgram *prg, BmInst inst);
 
-typedef struct BM {
+typedef struct BM Bm;
+
+typedef BmError (*BmNativeFunc)(Bm *bm);
+
+typedef struct BM_NATIVE_FUNC_LIST {
+  BmNativeFunc ptr[BM_NATIVE_FUNCS_CAP];
+  uint64_t len;
+} BmNativeFuncList;
+
+bool bm_native_funcs_push(BmNativeFuncList *list, BmNativeFunc func);
+
+struct BM {
   BmStack stack;
   BmProgram program;
   BmInstAddr pc;
+  BmNativeFuncList native_funcs;
   bool halted;
-} Bm;
+};
 
 void bm_dump(const Bm *bm, FILE *stream);
 
@@ -130,6 +143,9 @@ BmError bm_set_word(Bm *bm, size_t offset, BmWord operand);
 
 // `bm_stack_get` wrapper
 BmError bm_get_word(Bm *bm, size_t offset, BmWord *operand_out);
+
+// `bm_native_funcs_push` wrapper
+BmError bm_push_native_func(Bm *bm, BmNativeFunc func);
 
 BmError bm_pop_inst(Bm *bm, BmInst *inst_out);
 
@@ -464,6 +480,13 @@ BmError bm_stack_get(BmStack *stack, size_t offset, BmWord *operand_out) {
   return BM_ERROR_OK;
 }
 
+bool bm_native_funcs_push(BmNativeFuncList *list, BmNativeFunc func) {
+  if (list->len >= BM_NATIVE_FUNCS_CAP)
+    return false;
+  list->ptr[list->len++] = func;
+  return true;
+}
+
 BmError bm_push_word(Bm *bm, BmWord operand) {
   return bm_stack_push(&bm->stack, operand);
 }
@@ -478,6 +501,10 @@ BmError bm_set_word(Bm *bm, size_t offset, BmWord operand) {
 
 BmError bm_get_word(Bm *bm, size_t offset, BmWord *operand_out) {
   return bm_stack_get(&bm->stack, offset, operand_out);
+}
+
+BmError bm_push_native_func(Bm *bm, BmNativeFunc func) {
+  return bm_native_funcs_push(&bm->native_funcs, func);
 }
 
 BmError bm_pop_inst(Bm *bm, BmInst *inst_out) {
