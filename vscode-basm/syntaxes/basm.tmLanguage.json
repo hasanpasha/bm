@@ -8,7 +8,7 @@
   ],
   "repository": {
     "instructions": {
-      "match": "\\b(push|plusi|minusi|multi|divi|plusf|minusf|multf|divf|jmp|hlt|drop|jt|eq|dump|dup|nop|swap|not|gef)\\b",
+      "match": "\\b(push|plusi|minusi|multi|divi|plusf|minusf|multf|divf|jmp|call|ret|jt|hlt|drop|eq|dump|dup|nop|swap|not|gef)\\b",
       "name": "keyword.control.basm"
     },
     "numbers": {
@@ -29,7 +29,7 @@
           }
         },
         {
-          "match": "\\b(?<=jmp\\s|jf\\s|jt\\s)[A-Za-z_][A-Za-z0-9_]*\\b",
+          "match": "\\b(?<=jmp\\s|jt\\s|call\\s)[A-Za-z_][A-Za-z0-9_]*\\b",
           "name": "entity.name.label.basm"
         }
       ]
