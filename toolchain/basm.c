@@ -145,6 +145,10 @@ static void basm_translate_source(Basm *basm, StringView source) {
       inst.type = BM_INST_TYPE_SWAP;
       inst.operand.u64 = sv_parse_ulong(operand);
     }
+    else if (sv_eq(inst_name, sv_from_cstr("native"))) {
+      inst.type = BM_INST_TYPE_NATIVE;
+      inst.operand.u64 = sv_parse_ulong(operand);
+    }
     else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_DROP)                          //
         else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_PLUS_INT)                  //
         else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_MINUS_INT)                 //

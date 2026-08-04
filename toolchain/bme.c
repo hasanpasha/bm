@@ -7,6 +7,25 @@
 
 Bm bm = {0};
 
+static BmError bm_alloc(Bm *bm) {
+  BmError err = BM_ERROR_OK;
+
+  BmWord size_arg;
+  if ((err = bm_pop_word(bm, &size_arg)) != BM_ERROR_OK)
+    return err;
+
+  printf("allocating %lu\n", size_arg.u64);
+
+  const BmWord ptr = {.ptr = malloc(size_arg.u64)};
+  if ((err = bm_push_word(bm, ptr)) != BM_ERROR_OK)
+    return err;
+
+  char *buffer = (char *)ptr.ptr;
+  buffer[10] = 'a';
+
+  return err;
+}
+
 static char *shift(int *argc, char ***argv) {
   if (*argc < 1)
     return NULL;
@@ -70,6 +89,11 @@ int main(int argc, char *argv[]) {
 
   if (!bm_program_load_from_file(&bm.program, input_file)) {
     fprintf(stderr, "Error: failed to load program from '%s'.\n", input_file);
+    return EXIT_FAILURE;
+  }
+
+  if (!bm_push_native_func(&bm, bm_alloc)) {
+    fprintf(stderr, "Error: failed to add native function.\n");
     return EXIT_FAILURE;
   }
 

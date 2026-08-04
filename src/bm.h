@@ -69,6 +69,7 @@ typedef enum BM_INST_TYPE {
   BM_INST_TYPE_DUPLICATE,
   BM_INST_TYPE_SWAP,
   BM_INST_TYPE_NOT,
+  BM_INST_TYPE_NATIVE,
   BM_NUM_OF_INST_TYPES,
 } BmInstType;
 
@@ -237,6 +238,8 @@ const char *bm_inst_type_readable_name(BmInstType inst_type) {
     return "swap";
   case BM_INST_TYPE_NOT:
     return "not";
+  case BM_INST_TYPE_NATIVE:
+    return "native";
   case BM_NUM_OF_INST_TYPES:
   default:
     BM_UNREACHABLE();
@@ -250,6 +253,7 @@ bool bm_inst_type_has_operand(BmInstType inst_type) {
   case BM_INST_TYPE_CALL:
   case BM_INST_TYPE_DUPLICATE:
   case BM_INST_TYPE_SWAP:
+  case BM_INST_TYPE_NATIVE:
     return true;
   case BM_INST_TYPE_NO_OPERATION:
   case BM_INST_TYPE_HALT:
@@ -321,6 +325,8 @@ const char *bm_inst_type_string(BmInstType inst_type) {
     return "SWAP";
   case BM_INST_TYPE_NOT:
     return "NOT";
+  case BM_INST_TYPE_NATIVE:
+    return "NATIVE";
   case BM_NUM_OF_INST_TYPES:
   default:
     BM_UNREACHABLE();
@@ -663,6 +669,14 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
       return error;
     result.u64 = bo.f64 >= ao.f64;
     if ((error = bm_push_word(bm, result) != BM_ERROR_OK))
+      return error;
+  } break;
+  case BM_INST_TYPE_NATIVE: {
+    uint64_t idx = inst.operand.u64;
+    if (idx >= bm->native_funcs.len)
+      return BM_ERROR_ILLEGAL_OPERAND;
+    BmNativeFunc func = bm->native_funcs.ptr[idx];
+    if ((error = func(bm)) != BM_ERROR_OK)
       return error;
   } break;
   case BM_NUM_OF_INST_TYPES:

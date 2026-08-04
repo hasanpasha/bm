@@ -1,0 +1,6 @@
+    jmp main
+main:
+    push 10000
+    native 0
+    dump
+    hlt
