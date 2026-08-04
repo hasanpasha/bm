@@ -59,6 +59,7 @@ typedef enum BM_INST_TYPE {
   BM_INST_TYPE_MULTIPLY_FLOAT,
   BM_INST_TYPE_DIVIDE_FLOAT,
   BM_INST_TYPE_JUMP,
+  BM_INST_TYPE_CALL,
   BM_INST_TYPE_RETURN,
   BM_INST_TYPE_JMP_IF_TRUE,
   BM_INST_TYPE_TEST_EQUALS,
@@ -190,6 +191,8 @@ const char *bm_inst_type_readable_name(BmInstType inst_type) {
     return "divf";
   case BM_INST_TYPE_JUMP:
     return "jmp";
+  case BM_INST_TYPE_CALL:
+    return "call";
   case BM_INST_TYPE_RETURN:
     return "ret";
   case BM_INST_TYPE_JMP_IF_TRUE:
@@ -216,6 +219,7 @@ bool bm_inst_type_has_operand(BmInstType inst_type) {
   switch (inst_type) {
   case BM_INST_TYPE_PUSH:
   case BM_INST_TYPE_JUMP:
+  case BM_INST_TYPE_CALL:
   case BM_INST_TYPE_DUPLICATE:
   case BM_INST_TYPE_SWAP:
     return true;
@@ -271,6 +275,8 @@ const char *bm_inst_type_string(BmInstType inst_type) {
     return "DIVIDE_FLOAT";
   case BM_INST_TYPE_JUMP:
     return "JUMP";
+  case BM_INST_TYPE_CALL:
+    return "CALL";
   case BM_INST_TYPE_RETURN:
     return "RETURN";
   case BM_INST_TYPE_JMP_IF_TRUE:
@@ -539,6 +545,12 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
   case BM_INST_TYPE_JUMP:
     bm->pc = inst.operand.u64;
     break;
+  case BM_INST_TYPE_CALL: {
+    BmWord return_addr = {.u64 = bm->pc};
+    if ((error = bm_stack_push(&bm->stack, return_addr)) != BM_ERROR_OK)
+      return error;
+    bm->pc = inst.operand.u64;
+  } break;
   case BM_INST_TYPE_RETURN: {
     BmWord return_addr;
     if ((error = bm_stack_pop(&bm->stack, &return_addr)) != BM_ERROR_OK)

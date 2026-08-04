@@ -10,6 +10,12 @@ push 4f64               # acc (result of first division)
 push 3f64               # denominator
 push 750000             # counter
 
+jmp loop
+
+sin:
+    
+    ret
+
 loop:
     swap 2              # swap counter (top of stack) with current acc
 
@@ -42,6 +48,8 @@ loop:
 
     dup 0               # duplicate current counter since jt consumes top of stack
     jt  loop
+
+    call sin
 
 drop
 drop
