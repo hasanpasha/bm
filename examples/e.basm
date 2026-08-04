@@ -26,4 +26,8 @@ loop:
     jt loop
 
     dump
+    
+    drop
+    drop
+    drop
     hlt

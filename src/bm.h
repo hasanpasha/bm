@@ -49,6 +49,7 @@ typedef enum BM_INST_TYPE {
   BM_INST_TYPE_NO_OPERATION,
   BM_INST_TYPE_HALT,
   BM_INST_TYPE_PUSH,
+  BM_INST_TYPE_DROP,
   BM_INST_TYPE_PLUS_INT,
   BM_INST_TYPE_MINUS_INT,
   BM_INST_TYPE_MULTIPLY_INT,
@@ -168,6 +169,8 @@ const char *bm_inst_type_readable_name(BmInstType inst_type) {
     return "hlt";
   case BM_INST_TYPE_PUSH:
     return "push";
+  case BM_INST_TYPE_DROP:
+    return "drop";
   case BM_INST_TYPE_PLUS_INT:
     return "plusi";
   case BM_INST_TYPE_MINUS_INT:
@@ -215,6 +218,7 @@ bool bm_inst_type_has_operand(BmInstType inst_type) {
     return true;
   case BM_INST_TYPE_NO_OPERATION:
   case BM_INST_TYPE_HALT:
+  case BM_INST_TYPE_DROP:
   case BM_INST_TYPE_PLUS_INT:
   case BM_INST_TYPE_MINUS_INT:
   case BM_INST_TYPE_MULTIPLY_INT:
@@ -243,6 +247,8 @@ const char *bm_inst_type_string(BmInstType inst_type) {
     return "HALT";
   case BM_INST_TYPE_PUSH:
     return "PUSH";
+  case BM_INST_TYPE_DROP:
+    return "drop";
   case BM_INST_TYPE_PLUS_INT:
     return "PLUS_INT";
   case BM_INST_TYPE_MINUS_INT:
@@ -451,6 +457,10 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
   switch (inst.type) {
   case BM_INST_TYPE_PUSH:
     if ((error = bm_stack_push(&bm->stack, inst.operand)) != BM_ERROR_OK)
+      return error;
+    break;
+  case BM_INST_TYPE_DROP:
+    if ((error = bm_stack_pop(&bm->stack, NULL)) != BM_ERROR_OK)
       return error;
     break;
   case BM_INST_TYPE_PLUS_INT:
