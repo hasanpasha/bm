@@ -6,15 +6,9 @@
 # each subsequent odd number. The more times you do this, the closer
 # you will get to pi.
 
-push 4f64               # acc (result of first division)
-push 3f64               # denominator
-push 750000             # counter
-
-jmp loop
-
-sin:
-    
-    ret
+    push 4f64               # acc (result of first division)
+    push 3f64               # denominator
+    push 750000             # counter
 
 loop:
     swap 2              # swap counter (top of stack) with current acc
@@ -49,11 +43,11 @@ loop:
     dup 0               # duplicate current counter since jt consumes top of stack
     jt  loop
 
-    call sin
+    drop                # drop counter
+    drop                # drop denominator
 
-drop
-drop
+    # only pi remains on the stack
+    dump
+    drop
 
-dump    # the pi
-
-hlt
+    hlt
