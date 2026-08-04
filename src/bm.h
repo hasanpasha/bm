@@ -119,6 +119,18 @@ typedef struct BM {
 
 void bm_dump(const Bm *bm, FILE *stream);
 
+// `bm_stack_push` wrapper
+BmError bm_push_word(Bm *bm, BmWord operand);
+
+// `bm_stack_pop` wrapper
+BmError bm_pop_word(Bm *bm, BmWord *operand_out);
+
+// `bm_stack_set` wrapper
+BmError bm_set_word(Bm *bm, size_t offset, BmWord operand);
+
+// `bm_stack_get` wrapper
+BmError bm_get_word(Bm *bm, size_t offset, BmWord *operand_out);
+
 BmError bm_fetch_inst(Bm *bm, BmInst *inst_out);
 
 BmError bm_execute_inst(Bm *bm, BmInst inst);
@@ -452,6 +464,22 @@ BmError bm_stack_get(BmStack *stack, size_t offset, BmWord *operand_out) {
   return BM_ERROR_OK;
 }
 
+BmError bm_push_word(Bm *bm, BmWord operand) {
+  return bm_stack_push(&bm->stack, operand);
+}
+
+BmError bm_pop_word(Bm *bm, BmWord *operand_out) {
+  return bm_stack_pop(&bm->stack, operand_out);
+}
+
+BmError bm_set_word(Bm *bm, size_t offset, BmWord operand) {
+  return bm_stack_set(&bm->stack, offset, operand);
+}
+
+BmError bm_get_word(Bm *bm, size_t offset, BmWord *operand_out) {
+  return bm_stack_get(&bm->stack, offset, operand_out);
+}
+
 BmError bm_fetch_inst(Bm *bm, BmInst *inst_out) {
   if (bm->pc >= bm->program.len)
     return BM_ERROR_ILLEGAL_INST_ACCESS;
@@ -468,11 +496,11 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
 
   switch (inst.type) {
   case BM_INST_TYPE_PUSH:
-    if ((error = bm_stack_push(&bm->stack, inst.operand)) != BM_ERROR_OK)
+    if ((error = bm_push_word(bm, inst.operand)) != BM_ERROR_OK)
       return error;
     break;
   case BM_INST_TYPE_DROP:
-    if ((error = bm_stack_pop(&bm->stack, NULL)) != BM_ERROR_OK)
+    if ((error = bm_pop_word(bm, NULL)) != BM_ERROR_OK)
       return error;
     break;
   case BM_INST_TYPE_PLUS_INT:
@@ -480,9 +508,9 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
   case BM_INST_TYPE_MULTIPLY_INT:
   case BM_INST_TYPE_DIVIDE_INT: {
     BmWord ao, bo;
-    if ((error = bm_stack_pop(&bm->stack, &bo)) != BM_ERROR_OK)
+    if ((error = bm_pop_word(bm, &bo)) != BM_ERROR_OK)
       return error;
-    if ((error = bm_stack_pop(&bm->stack, &ao)) != BM_ERROR_OK)
+    if ((error = bm_pop_word(bm, &ao)) != BM_ERROR_OK)
       return error;
 
     int64_t a = ao.i64;
@@ -501,8 +529,7 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
       result = a / b;
     }
 
-    if ((error = bm_stack_push(&bm->stack, (BmWord){.i64 = result})) !=
-        BM_ERROR_OK)
+    if ((error = bm_push_word(bm, (BmWord){.i64 = result})) != BM_ERROR_OK)
       return error;
   } break;
   case BM_INST_TYPE_PLUS_FLOAT:
@@ -510,9 +537,9 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
   case BM_INST_TYPE_MULTIPLY_FLOAT:
   case BM_INST_TYPE_DIVIDE_FLOAT: {
     BmWord ao, bo;
-    if ((error = bm_stack_pop(&bm->stack, &bo)) != BM_ERROR_OK)
+    if ((error = bm_pop_word(bm, &bo)) != BM_ERROR_OK)
       return error;
-    if ((error = bm_stack_pop(&bm->stack, &ao)) != BM_ERROR_OK)
+    if ((error = bm_pop_word(bm, &ao)) != BM_ERROR_OK)
       return error;
 
     double a = ao.f64;
@@ -528,18 +555,17 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
       result = a / b;
     }
 
-    if ((error = bm_stack_push(&bm->stack, (BmWord){.f64 = result})) !=
-        BM_ERROR_OK)
+    if ((error = bm_push_word(bm, (BmWord){.f64 = result})) != BM_ERROR_OK)
       return error;
   } break;
   case BM_INST_TYPE_TEST_EQUALS: {
     BmWord ao, bo, result;
-    if ((error = bm_stack_pop(&bm->stack, &bo)) != BM_ERROR_OK)
+    if ((error = bm_pop_word(bm, &bo)) != BM_ERROR_OK)
       return error;
-    if ((error = bm_stack_pop(&bm->stack, &ao)) != BM_ERROR_OK)
+    if ((error = bm_pop_word(bm, &ao)) != BM_ERROR_OK)
       return error;
     result.u64 = ao.u64 == bo.u64;
-    if ((error = bm_stack_push(&bm->stack, result) != BM_ERROR_OK))
+    if ((error = bm_push_word(bm, result) != BM_ERROR_OK))
       return error;
   } break;
   case BM_INST_TYPE_JUMP:
@@ -547,13 +573,13 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
     break;
   case BM_INST_TYPE_CALL: {
     BmWord return_addr = {.u64 = bm->pc};
-    if ((error = bm_stack_push(&bm->stack, return_addr)) != BM_ERROR_OK)
+    if ((error = bm_push_word(bm, return_addr)) != BM_ERROR_OK)
       return error;
     bm->pc = inst.operand.u64;
   } break;
   case BM_INST_TYPE_RETURN: {
     BmWord return_addr;
-    if ((error = bm_stack_pop(&bm->stack, &return_addr)) != BM_ERROR_OK)
+    if ((error = bm_pop_word(bm, &return_addr)) != BM_ERROR_OK)
       return error;
     bm->pc = return_addr.u64;
   } break;
@@ -562,7 +588,7 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
     break;
   case BM_INST_TYPE_JMP_IF_TRUE: {
     BmWord top_value;
-    if ((error = bm_stack_pop(&bm->stack, &top_value)) != BM_ERROR_OK)
+    if ((error = bm_pop_word(bm, &top_value)) != BM_ERROR_OK)
       return error;
     if (top_value.u64 != 0)
       bm->pc = inst.operand.u64;
@@ -575,9 +601,9 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
   } break;
   case BM_INST_TYPE_DUPLICATE: {
     BmWord x;
-    if ((error = bm_stack_get(&bm->stack, inst.operand.u64, &x)) != BM_ERROR_OK)
+    if ((error = bm_get_word(bm, inst.operand.u64, &x)) != BM_ERROR_OK)
       return error;
-    if ((error = bm_stack_push(&bm->stack, x)) != BM_ERROR_OK)
+    if ((error = bm_push_word(bm, x)) != BM_ERROR_OK)
       return error;
   } break;
   case BM_INST_TYPE_NO_OPERATION:
@@ -585,31 +611,31 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
   case BM_INST_TYPE_SWAP: {
     uint64_t idx = inst.operand.u64;
     BmWord a, b;
-    if ((error = bm_stack_get(&bm->stack, 0, &a)) != BM_ERROR_OK)
+    if ((error = bm_get_word(bm, 0, &a)) != BM_ERROR_OK)
       return error;
-    if ((error = bm_stack_get(&bm->stack, idx, &b)) != BM_ERROR_OK)
+    if ((error = bm_get_word(bm, idx, &b)) != BM_ERROR_OK)
       return error;
-    if ((error = bm_stack_set(&bm->stack, 0, b)) != BM_ERROR_OK)
+    if ((error = bm_set_word(bm, 0, b)) != BM_ERROR_OK)
       return error;
-    if ((error = bm_stack_set(&bm->stack, idx, a)) != BM_ERROR_OK)
+    if ((error = bm_set_word(bm, idx, a)) != BM_ERROR_OK)
       return error;
   } break;
   case BM_INST_TYPE_NOT: {
     BmWord x;
-    if ((error = bm_stack_get(&bm->stack, 0, &x)) != BM_ERROR_OK)
+    if ((error = bm_get_word(bm, 0, &x)) != BM_ERROR_OK)
       return error;
     x.u64 = !x.u64;
-    if ((error = bm_stack_set(&bm->stack, 0, x)) != BM_ERROR_OK)
+    if ((error = bm_set_word(bm, 0, x)) != BM_ERROR_OK)
       return error;
   } break;
   case BM_INST_TYPE_TEST_GREATER_EQUALS_FLOAT: {
     BmWord ao, bo, result;
-    if ((error = bm_stack_pop(&bm->stack, &bo)) != BM_ERROR_OK)
+    if ((error = bm_pop_word(bm, &bo)) != BM_ERROR_OK)
       return error;
-    if ((error = bm_stack_pop(&bm->stack, &ao)) != BM_ERROR_OK)
+    if ((error = bm_pop_word(bm, &ao)) != BM_ERROR_OK)
       return error;
     result.u64 = bo.f64 >= ao.f64;
-    if ((error = bm_stack_push(&bm->stack, result) != BM_ERROR_OK))
+    if ((error = bm_push_word(bm, result) != BM_ERROR_OK))
       return error;
   } break;
   case BM_NUM_OF_INST_TYPES:
