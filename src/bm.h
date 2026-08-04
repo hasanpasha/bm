@@ -131,7 +131,7 @@ BmError bm_set_word(Bm *bm, size_t offset, BmWord operand);
 // `bm_stack_get` wrapper
 BmError bm_get_word(Bm *bm, size_t offset, BmWord *operand_out);
 
-BmError bm_fetch_inst(Bm *bm, BmInst *inst_out);
+BmError bm_pop_inst(Bm *bm, BmInst *inst_out);
 
 BmError bm_execute_inst(Bm *bm, BmInst inst);
 
@@ -480,7 +480,7 @@ BmError bm_get_word(Bm *bm, size_t offset, BmWord *operand_out) {
   return bm_stack_get(&bm->stack, offset, operand_out);
 }
 
-BmError bm_fetch_inst(Bm *bm, BmInst *inst_out) {
+BmError bm_pop_inst(Bm *bm, BmInst *inst_out) {
   if (bm->pc >= bm->program.len)
     return BM_ERROR_ILLEGAL_INST_ACCESS;
 
@@ -651,7 +651,7 @@ BmError bm_step(Bm *bm) {
   BmError error = BM_ERROR_OK;
 
   BmInst inst;
-  if ((error = bm_fetch_inst(bm, &inst)) != BM_ERROR_OK)
+  if ((error = bm_pop_inst(bm, &inst)) != BM_ERROR_OK)
     return error;
 
   if ((error = bm_execute_inst(bm, inst)) != BM_ERROR_OK)

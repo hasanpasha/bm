@@ -86,7 +86,7 @@ int main(int argc, char *argv[]) {
 
     while (!bm.halted && limit != 0) {
 
-      if ((error = bm_fetch_inst(&bm, &inst)) != BM_ERROR_OK) {
+      if ((error = bm_pop_inst(&bm, &inst)) != BM_ERROR_OK) {
         fprintf(stderr, "Error: %s\n", bm_error_string(error));
         return EXIT_FAILURE;
       }
