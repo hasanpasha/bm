@@ -9,7 +9,7 @@ typedef struct STRING_VIEW {
   size_t len;
 } StringView;
 
-#define SV "%.*s"
+#define SV_FMT "%.*s"
 #define SV_ARG(sv) (int)sv.len, sv.ptr
 
 StringView sv_from_cstr(const char *str);

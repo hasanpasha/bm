@@ -37,7 +37,8 @@ static uint64_t basm_find_label(const Basm *basm, StringView name) {
     }
   }
 
-  fprintf(stderr, "Error: failed to resolve label '" SV "'.\n", SV_ARG(name));
+  fprintf(stderr, "Error: failed to resolve label '" SV_FMT "'.\n",
+          SV_ARG(name));
   exit(1);
 }
 
@@ -160,7 +161,7 @@ static void basm_translate_source(Basm *basm, StringView source) {
         else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_TEST_GREATER_EQUALS_FLOAT) //
         else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_RETURN)                    //
         else {
-      fprintf(stderr, "Error: unknown instruction '" SV "'\n",
+      fprintf(stderr, "Error: unknown instruction '" SV_FMT "'\n",
               SV_ARG(inst_name));
       exit(1);
     }
