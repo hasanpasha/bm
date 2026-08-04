@@ -1,0 +1,38 @@
+    jmp main
+
+# a
+# b
+# t
+# --
+# a + (b - a) * t
+lerpf:
+    swap 3
+    dup 0
+    swap 3
+    swap 1
+    minusf
+    multf
+    plusf
+    swap 1
+    ret
+
+main:
+    push 69f64
+    push 420f64
+    push 0f64
+    call lerpf
+    dump
+    drop
+    push 69f64
+    push 420f64
+    push 1f64
+    call lerpf
+    dump
+    drop
+    push 69f64
+    push 420f64
+    push 0.5f64
+    call lerpf
+    dump
+    drop
+    hlt
