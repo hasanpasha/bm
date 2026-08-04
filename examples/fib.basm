@@ -1,9 +1,17 @@
 # first two fibonacci numbers
-        push 0
-        push 1
+        push 20         # counter
+        push 0          # fib(n-2)
+        push 1          # fib(n-1)
+
 loop:   dup 0           # the loop
         swap 2
-        plusf
+        plusi
         dump
-        jmp loop        # repeat
+        swap 2          # being counter to top
+        push 1
+        minusi
+        dup 0
+        swap 3
+        swap 1
+        jt loop        # repeat
         hlt
