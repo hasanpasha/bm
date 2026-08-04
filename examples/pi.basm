@@ -11,43 +11,41 @@ push 3f64               # denominator
 push 750000             # counter
 
 loop:
+    swap 2              # swap counter (top of stack) with current acc
+
+    # calculate next denominator
     push 4f64
     dup 2
-    divf
-    swap 1
-    swap 3
-    swap 1
-    minusf
-    swap 2
-    swap 1
     push 2f64
     plusf
-    swap 1
+    swap 3
 
+    # calculate with current denominator
+    divf                #       (4/n)
+    minusf              # acc - ^
+
+    # calculate next denominator
     push 4f64
     dup 2
-    divf
-    swap 1
-    swap 3
-    swap 1
-    plusf
-
-    dump
-
-    swap 2
-    swap 1
     push 2f64
     plusf
-    swap 1
-    
+    swap 3
+
+    # calculate with next denominator
+    divf                #       (4/n)
+    plusf               # acc + ^
+
+    # decrement counter 
+    swap 2
     push 1
     minusi
-    dup 0
-    dump
-    push 0
-    eq
-    not
 
-    jt loop
+    dup 0               # duplicate current counter since jt consumes top of stack
+    jt  loop
 
-    hlt
+drop
+drop
+
+dump    # the pi
+
+hlt
