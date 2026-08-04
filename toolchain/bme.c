@@ -26,11 +26,31 @@ static BmError bm_free(Bm *bm) {
   return BM_ERROR_OK;
 }
 
-static BmError bm_debug_print(Bm *bm) {
+static BmError bm_debug_i64(Bm *bm) {
   BmWord word;
   BM_CATCH_ERROR(bm_pop_word(bm, &word));
-  bm_word_dump(word, stdout);
-  fputc('\n', stdout);
+  printf("%ld\n", word.u64);
+  return BM_ERROR_OK;
+}
+
+static BmError bm_debug_u64(Bm *bm) {
+  BmWord word;
+  BM_CATCH_ERROR(bm_pop_word(bm, &word));
+  printf("%lu\n", word.u64);
+  return BM_ERROR_OK;
+}
+
+static BmError bm_debug_f64(Bm *bm) {
+  BmWord word;
+  BM_CATCH_ERROR(bm_pop_word(bm, &word));
+  printf("%lf\n", word.f64);
+  return BM_ERROR_OK;
+}
+
+static BmError bm_debug_ptr(Bm *bm) {
+  BmWord word;
+  BM_CATCH_ERROR(bm_pop_word(bm, &word));
+  printf("%p\n", word.ptr);
   return BM_ERROR_OK;
 }
 
@@ -110,7 +130,22 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
-  if (!bm_push_native_func(&bm, bm_debug_print)) {
+  if (!bm_push_native_func(&bm, bm_debug_i64)) {
+    fprintf(stderr, "Error: failed to add native function.\n");
+    return EXIT_FAILURE;
+  }
+
+  if (!bm_push_native_func(&bm, bm_debug_u64)) {
+    fprintf(stderr, "Error: failed to add native function.\n");
+    return EXIT_FAILURE;
+  }
+
+  if (!bm_push_native_func(&bm, bm_debug_f64)) {
+    fprintf(stderr, "Error: failed to add native function.\n");
+    return EXIT_FAILURE;
+  }
+
+  if (!bm_push_native_func(&bm, bm_debug_ptr)) {
     fprintf(stderr, "Error: failed to add native function.\n");
     return EXIT_FAILURE;
   }

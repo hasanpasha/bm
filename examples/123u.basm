@@ -3,5 +3,5 @@ push 2u64
 push 3
 plusi
 plusi
-native 2
+native 3 # print u64
 hlt

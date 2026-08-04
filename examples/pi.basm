@@ -47,6 +47,6 @@ loop:
     drop                # drop denominator
 
     # only pi remains on the stack
-    native 2
+    native 4            # print f64
 
     hlt

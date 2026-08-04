@@ -25,7 +25,7 @@ loop:
 
     jt loop
 
-    native 2
+    native 4        # print f64
     
     drop
     drop

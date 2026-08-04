@@ -21,18 +21,18 @@ main:
     push 420f64
     push 0f64
     call lerpf
-    native 2
+    native 4
 
     push 69f64
     push 420f64
     push 1f64
     call lerpf
-    native 2
+    native 4
 
     push 69f64
     push 420f64
     push 0.5f64
     call lerpf
-    native 2
+    native 4
 
     hlt

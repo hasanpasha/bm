@@ -3,6 +3,6 @@ main:
     push 420
     native 0
     dup 0
-    native 2
+    native 5 # print ptr
     native 1
     hlt

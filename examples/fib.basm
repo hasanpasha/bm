@@ -7,12 +7,12 @@ loop:   dup 0           # the loop
         swap 2
         plusi
         dup 0
-        native 2
+        native 3        # print u64
         swap 2          # being counter to top
         push 1
         minusi
         dup 0
         swap 3
         swap 1
-        jt loop        # repeat
+        jt loop         # repeat
         hlt
