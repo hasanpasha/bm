@@ -145,7 +145,7 @@ BmError bm_set_word(Bm *bm, size_t offset, BmWord operand);
 BmError bm_get_word(Bm *bm, size_t offset, BmWord *operand_out);
 
 // `bm_native_funcs_push` wrapper
-BmError bm_push_native_func(Bm *bm, BmNativeFunc func);
+bool bm_push_native_func(Bm *bm, BmNativeFunc func);
 
 BmError bm_pop_inst(Bm *bm, BmInst *inst_out);
 
@@ -503,7 +503,7 @@ BmError bm_get_word(Bm *bm, size_t offset, BmWord *operand_out) {
   return bm_stack_get(&bm->stack, offset, operand_out);
 }
 
-BmError bm_push_native_func(Bm *bm, BmNativeFunc func) {
+bool bm_push_native_func(Bm *bm, BmNativeFunc func) {
   return bm_native_funcs_push(&bm->native_funcs, func);
 }
 
