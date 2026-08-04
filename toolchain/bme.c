@@ -8,20 +8,16 @@
 Bm bm = {0};
 
 static BmError bm_alloc(Bm *bm) {
-  BmError err = BM_ERROR_OK;
-
   BmWord size_arg;
-  if ((err = bm_pop_word(bm, &size_arg)) != BM_ERROR_OK)
-    return err;
+  BM_CATCH_ERROR(bm_pop_word(bm, &size_arg));
 
   const BmWord ptr = {.ptr = malloc(size_arg.u64)};
-  if ((err = bm_push_word(bm, ptr)) != BM_ERROR_OK)
-    return err;
+  BM_CATCH_ERROR(bm_push_word(bm, ptr));
 
   char *buffer = (char *)ptr.ptr;
   buffer[10] = 'a';
 
-  return err;
+  return BM_ERROR_OK;
 }
 
 static char *shift(int *argc, char ***argv) {

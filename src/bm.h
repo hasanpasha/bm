@@ -29,6 +29,13 @@ typedef enum BM_ERROR {
 
 const char *bm_error_string(BmError error);
 
+#define BM_CATCH_ERROR(error)                                                  \
+  do {                                                                         \
+    BmError err = (error);                                                     \
+    if (err != BM_ERROR_OK)                                                    \
+      return err;                                                              \
+  } while (false);
+
 #define BM_STACK_CAP 1024
 #define BM_PROGRAM_CAP 1024
 #define BM_NATIVE_FUNCS_CAP 1024
@@ -525,26 +532,20 @@ BmError bm_pop_inst(Bm *bm, BmInst *inst_out) {
 }
 
 BmError bm_execute_inst(Bm *bm, BmInst inst) {
-  BmError error = BM_ERROR_OK;
-
   switch (inst.type) {
   case BM_INST_TYPE_PUSH:
-    if ((error = bm_push_word(bm, inst.operand)) != BM_ERROR_OK)
-      return error;
+    BM_CATCH_ERROR(bm_push_word(bm, inst.operand));
     break;
   case BM_INST_TYPE_DROP:
-    if ((error = bm_pop_word(bm, NULL)) != BM_ERROR_OK)
-      return error;
+    BM_CATCH_ERROR(bm_pop_word(bm, NULL));
     break;
   case BM_INST_TYPE_PLUS_INT:
   case BM_INST_TYPE_MINUS_INT:
   case BM_INST_TYPE_MULTIPLY_INT:
   case BM_INST_TYPE_DIVIDE_INT: {
     BmWord ao, bo;
-    if ((error = bm_pop_word(bm, &bo)) != BM_ERROR_OK)
-      return error;
-    if ((error = bm_pop_word(bm, &ao)) != BM_ERROR_OK)
-      return error;
+    BM_CATCH_ERROR(bm_pop_word(bm, &bo));
+    BM_CATCH_ERROR(bm_pop_word(bm, &ao));
 
     int64_t a = ao.i64;
     int64_t b = bo.i64;
@@ -562,18 +563,15 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
       result = a / b;
     }
 
-    if ((error = bm_push_word(bm, (BmWord){.i64 = result})) != BM_ERROR_OK)
-      return error;
+    BM_CATCH_ERROR(bm_push_word(bm, (BmWord){.i64 = result}));
   } break;
   case BM_INST_TYPE_PLUS_FLOAT:
   case BM_INST_TYPE_MINUS_FLOAT:
   case BM_INST_TYPE_MULTIPLY_FLOAT:
   case BM_INST_TYPE_DIVIDE_FLOAT: {
     BmWord ao, bo;
-    if ((error = bm_pop_word(bm, &bo)) != BM_ERROR_OK)
-      return error;
-    if ((error = bm_pop_word(bm, &ao)) != BM_ERROR_OK)
-      return error;
+    BM_CATCH_ERROR(bm_pop_word(bm, &bo));
+    BM_CATCH_ERROR(bm_pop_word(bm, &ao));
 
     double a = ao.f64;
     double b = bo.f64;
@@ -588,32 +586,26 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
       result = a / b;
     }
 
-    if ((error = bm_push_word(bm, (BmWord){.f64 = result})) != BM_ERROR_OK)
-      return error;
+    BM_CATCH_ERROR(bm_push_word(bm, (BmWord){.f64 = result}));
   } break;
   case BM_INST_TYPE_TEST_EQUALS: {
     BmWord ao, bo, result;
-    if ((error = bm_pop_word(bm, &bo)) != BM_ERROR_OK)
-      return error;
-    if ((error = bm_pop_word(bm, &ao)) != BM_ERROR_OK)
-      return error;
+    BM_CATCH_ERROR(bm_pop_word(bm, &bo));
+    BM_CATCH_ERROR(bm_pop_word(bm, &ao));
     result.u64 = ao.u64 == bo.u64;
-    if ((error = bm_push_word(bm, result) != BM_ERROR_OK))
-      return error;
+    BM_CATCH_ERROR(bm_push_word(bm, result));
   } break;
   case BM_INST_TYPE_JUMP:
     bm->pc = inst.operand.u64;
     break;
   case BM_INST_TYPE_CALL: {
     BmWord return_addr = {.u64 = bm->pc};
-    if ((error = bm_push_word(bm, return_addr)) != BM_ERROR_OK)
-      return error;
+    BM_CATCH_ERROR(bm_push_word(bm, return_addr));
     bm->pc = inst.operand.u64;
   } break;
   case BM_INST_TYPE_RETURN: {
     BmWord return_addr;
-    if ((error = bm_pop_word(bm, &return_addr)) != BM_ERROR_OK)
-      return error;
+    BM_CATCH_ERROR(bm_pop_word(bm, &return_addr));
     bm->pc = return_addr.u64;
   } break;
   case BM_INST_TYPE_HALT:
@@ -621,8 +613,7 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
     break;
   case BM_INST_TYPE_JMP_IF_TRUE: {
     BmWord top_value;
-    if ((error = bm_pop_word(bm, &top_value)) != BM_ERROR_OK)
-      return error;
+    BM_CATCH_ERROR(bm_pop_word(bm, &top_value));
     if (top_value.u64 != 0)
       bm->pc = inst.operand.u64;
   } break;
@@ -634,50 +625,38 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
   } break;
   case BM_INST_TYPE_DUPLICATE: {
     BmWord x;
-    if ((error = bm_get_word(bm, inst.operand.u64, &x)) != BM_ERROR_OK)
-      return error;
-    if ((error = bm_push_word(bm, x)) != BM_ERROR_OK)
-      return error;
+    BM_CATCH_ERROR(bm_get_word(bm, inst.operand.u64, &x));
+    BM_CATCH_ERROR(bm_push_word(bm, x));
   } break;
   case BM_INST_TYPE_NO_OPERATION:
     break;
   case BM_INST_TYPE_SWAP: {
     uint64_t idx = inst.operand.u64;
     BmWord a, b;
-    if ((error = bm_get_word(bm, 0, &a)) != BM_ERROR_OK)
-      return error;
-    if ((error = bm_get_word(bm, idx, &b)) != BM_ERROR_OK)
-      return error;
-    if ((error = bm_set_word(bm, 0, b)) != BM_ERROR_OK)
-      return error;
-    if ((error = bm_set_word(bm, idx, a)) != BM_ERROR_OK)
-      return error;
+    BM_CATCH_ERROR(bm_get_word(bm, 0, &a));
+    BM_CATCH_ERROR(bm_get_word(bm, idx, &b));
+    BM_CATCH_ERROR(bm_set_word(bm, 0, b));
+    BM_CATCH_ERROR(bm_set_word(bm, idx, a));
   } break;
   case BM_INST_TYPE_NOT: {
     BmWord x;
-    if ((error = bm_get_word(bm, 0, &x)) != BM_ERROR_OK)
-      return error;
+    BM_CATCH_ERROR(bm_get_word(bm, 0, &x));
     x.u64 = !x.u64;
-    if ((error = bm_set_word(bm, 0, x)) != BM_ERROR_OK)
-      return error;
+    BM_CATCH_ERROR(bm_set_word(bm, 0, x));
   } break;
   case BM_INST_TYPE_TEST_GREATER_EQUALS_FLOAT: {
     BmWord ao, bo, result;
-    if ((error = bm_pop_word(bm, &bo)) != BM_ERROR_OK)
-      return error;
-    if ((error = bm_pop_word(bm, &ao)) != BM_ERROR_OK)
-      return error;
+    BM_CATCH_ERROR(bm_pop_word(bm, &bo));
+    BM_CATCH_ERROR(bm_pop_word(bm, &ao));
     result.u64 = bo.f64 >= ao.f64;
-    if ((error = bm_push_word(bm, result) != BM_ERROR_OK))
-      return error;
+    BM_CATCH_ERROR(bm_push_word(bm, result));
   } break;
   case BM_INST_TYPE_NATIVE: {
     uint64_t idx = inst.operand.u64;
     if (idx >= bm->native_funcs.len)
       return BM_ERROR_ILLEGAL_OPERAND;
     BmNativeFunc func = bm->native_funcs.ptr[idx];
-    if ((error = func(bm)) != BM_ERROR_OK)
-      return error;
+    BM_CATCH_ERROR(func(bm));
   } break;
   case BM_NUM_OF_INST_TYPES:
   default:
@@ -685,27 +664,20 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
     break;
   }
 
-  return error;
+  return BM_ERROR_OK;
 }
 
 BmError bm_step(Bm *bm) {
-  BmError error = BM_ERROR_OK;
-
   BmInst inst;
-  if ((error = bm_pop_inst(bm, &inst)) != BM_ERROR_OK)
-    return error;
-
-  if ((error = bm_execute_inst(bm, inst)) != BM_ERROR_OK)
-    return error;
-
-  return error;
+  BM_CATCH_ERROR(bm_pop_inst(bm, &inst));
+  BM_CATCH_ERROR(bm_execute_inst(bm, inst));
+  return BM_ERROR_OK;
 }
 
 BmError bm_execute_program(Bm *bm, int limit) {
   BmError error = BM_ERROR_OK;
   while (!bm->halted && limit != 0) {
-    if ((error = bm_step(bm)) != BM_ERROR_OK)
-      return error;
+    BM_CATCH_ERROR(bm_step(bm));
 
     if (limit > 0)
       limit--;
