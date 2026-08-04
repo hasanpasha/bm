@@ -37,7 +37,7 @@ static uint64_t basm_find_label(const Basm *basm, StringView name) {
     }
   }
 
-  fprintf(stderr, "Error: failed to resolved '" SV "'.\n", SV_ARG(name));
+  fprintf(stderr, "Error: failed to resolve label '" SV "'.\n", SV_ARG(name));
   exit(1);
 }
 
