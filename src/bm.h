@@ -72,7 +72,6 @@ typedef enum BM_INST_TYPE {
   BM_INST_TYPE_JMP_IF_TRUE,
   BM_INST_TYPE_TEST_EQUALS,
   BM_INST_TYPE_TEST_GREATER_EQUALS_FLOAT,
-  BM_INST_TYPE_DEBUG_PRINT,
   BM_INST_TYPE_DUPLICATE,
   BM_INST_TYPE_SWAP,
   BM_INST_TYPE_NOT,
@@ -237,8 +236,6 @@ const char *bm_inst_type_readable_name(BmInstType inst_type) {
     return "eq";
   case BM_INST_TYPE_TEST_GREATER_EQUALS_FLOAT:
     return "gef";
-  case BM_INST_TYPE_DEBUG_PRINT:
-    return "dump";
   case BM_INST_TYPE_DUPLICATE:
     return "dup";
   case BM_INST_TYPE_SWAP:
@@ -276,7 +273,6 @@ bool bm_inst_type_has_operand(BmInstType inst_type) {
   case BM_INST_TYPE_JMP_IF_TRUE:
   case BM_INST_TYPE_TEST_EQUALS:
   case BM_INST_TYPE_TEST_GREATER_EQUALS_FLOAT:
-  case BM_INST_TYPE_DEBUG_PRINT:
   case BM_INST_TYPE_NOT:
   case BM_INST_TYPE_RETURN:
     return false;
@@ -324,8 +320,6 @@ const char *bm_inst_type_string(BmInstType inst_type) {
     return "TEST_EQUALS";
   case BM_INST_TYPE_TEST_GREATER_EQUALS_FLOAT:
     return "TEST_GREATER_EQUALS_FLOAT";
-  case BM_INST_TYPE_DEBUG_PRINT:
-    return "DEBUG_PRINT";
   case BM_INST_TYPE_DUPLICATE:
     return "DUPLICATE";
   case BM_INST_TYPE_SWAP:
@@ -616,12 +610,6 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
     BM_CATCH_ERROR(bm_pop_word(bm, &top_value));
     if (top_value.u64 != 0)
       bm->pc = inst.operand.u64;
-  } break;
-  case BM_INST_TYPE_DEBUG_PRINT: {
-    if (bm->stack.idx <= 0)
-      return BM_ERROR_STACK_UNDERFLOW;
-    bm_word_dump(bm->stack.ptr[bm->stack.idx - 1], stdout);
-    fputc('\n', stdout);
   } break;
   case BM_INST_TYPE_DUPLICATE: {
     BmWord x;

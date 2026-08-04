@@ -3,5 +3,5 @@ push 2u64
 push 3
 plusi
 plusi
-dump
+#dump
 hlt

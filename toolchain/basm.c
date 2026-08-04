@@ -146,7 +146,6 @@ static void basm_translate_source(Basm *basm, StringView source) {
         else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_MINUS_FLOAT)               //
         else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_MULTIPLY_FLOAT)            //
         else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_DIVIDE_FLOAT)              //
-        else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_DEBUG_PRINT)               //
         else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_TEST_EQUALS)               //
         else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_HALT)                      //
         else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_NOT)                       //

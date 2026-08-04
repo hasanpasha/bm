@@ -6,7 +6,7 @@
 loop:   dup 0           # the loop
         swap 2
         plusi
-        dump
+        #dump
         swap 2          # being counter to top
         push 1
         minusi
