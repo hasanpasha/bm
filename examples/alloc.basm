@@ -1,6 +1,6 @@
     jmp main
 main:
-    push 10000
+    push 420
     native 0
     dump
     hlt

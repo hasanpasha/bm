@@ -14,8 +14,6 @@ static BmError bm_alloc(Bm *bm) {
   if ((err = bm_pop_word(bm, &size_arg)) != BM_ERROR_OK)
     return err;
 
-  printf("allocating %lu\n", size_arg.u64);
-
   const BmWord ptr = {.ptr = malloc(size_arg.u64)};
   if ((err = bm_push_word(bm, ptr)) != BM_ERROR_OK)
     return err;
