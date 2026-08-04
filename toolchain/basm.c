@@ -107,49 +107,37 @@ static void basm_translate_source(Basm *basm, StringView source) {
   if (sv_eq(inst_name, sv_from_cstr(bm_inst_type_readable_name(bm_type))))     \
     inst.type = bm_type;
 
+#define TRY_PARSE_ULONG_OP_INST(bm_type)                                       \
+  if (sv_eq(inst_name, sv_from_cstr(bm_inst_type_readable_name(bm_type)))) {   \
+    inst.type = bm_type;                                                       \
+    inst.operand.u64 = sv_parse_ulong(operand);                                \
+  }
+
+#define TRY_PARSE_WORD_OP_INST(bm_type)                                        \
+  if (sv_eq(inst_name, sv_from_cstr(bm_inst_type_readable_name(bm_type)))) {   \
+    inst.type = bm_type;                                                       \
+    inst.operand = basm_parse_word(operand);                                   \
+  }
+
+#define TRY_PARSE_ULONG_OR_LABEL_OP_INST(bm_type)                              \
+  if (sv_eq(inst_name, sv_from_cstr(bm_inst_type_readable_name(bm_type)))) {   \
+    inst.type = bm_type;                                                       \
+    if (operand.len > 0 && isdigit((unsigned char)operand.ptr[0]))             \
+      inst.operand.u64 = sv_parse_ulong(operand);                              \
+    else                                                                       \
+      basm_push_deferred_operand(basm, basm->prg.len, operand);                \
+  }
+
     BmInst inst = {0};
-    TRY_PARSE_NO_OP_INST(BM_INST_TYPE_NO_OPERATION)
-    else if (sv_eq(inst_name, sv_from_cstr("push"))) {
-      inst.type = BM_INST_TYPE_PUSH;
-      inst.operand = basm_parse_word(operand);
-    }
-    else if (sv_eq(inst_name, sv_from_cstr("dup"))) {
-      inst.type = BM_INST_TYPE_DUPLICATE;
-      inst.operand.u64 = sv_parse_ulong(operand);
-    }
-    else if (sv_eq(inst_name, sv_from_cstr("jmp"))) {
-      inst.type = BM_INST_TYPE_JUMP;
-      if (isdigit(operand.ptr[0])) {
-        inst.operand.u64 = sv_parse_ulong(operand);
-      } else {
-        basm_push_deferred_operand(basm, basm->prg.len, operand);
-      }
-    }
-    else if (sv_eq(inst_name, sv_from_cstr("call"))) {
-      inst.type = BM_INST_TYPE_CALL;
-      if (isdigit(operand.ptr[0])) {
-        inst.operand.u64 = sv_parse_ulong(operand);
-      } else {
-        basm_push_deferred_operand(basm, basm->prg.len, operand);
-      }
-    }
-    else if (sv_eq(inst_name, sv_from_cstr("jt"))) {
-      inst.type = BM_INST_TYPE_JMP_IF_TRUE;
-      if (isdigit(operand.ptr[0])) {
-        inst.operand.u64 = sv_parse_ulong(operand);
-      } else {
-        basm_push_deferred_operand(basm, basm->prg.len, operand);
-      }
-    }
-    else if (sv_eq(inst_name, sv_from_cstr("swap"))) {
-      inst.type = BM_INST_TYPE_SWAP;
-      inst.operand.u64 = sv_parse_ulong(operand);
-    }
-    else if (sv_eq(inst_name, sv_from_cstr("native"))) {
-      inst.type = BM_INST_TYPE_NATIVE;
-      inst.operand.u64 = sv_parse_ulong(operand);
-    }
-    else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_DROP)                          //
+    TRY_PARSE_NO_OP_INST(BM_INST_TYPE_NO_OPERATION)                       //
+    else TRY_PARSE_WORD_OP_INST(BM_INST_TYPE_PUSH)                        //
+        else TRY_PARSE_ULONG_OP_INST(BM_INST_TYPE_DUPLICATE)              //
+        else TRY_PARSE_ULONG_OR_LABEL_OP_INST(BM_INST_TYPE_JUMP)          //
+        else TRY_PARSE_ULONG_OR_LABEL_OP_INST(BM_INST_TYPE_CALL)          //
+        else TRY_PARSE_ULONG_OR_LABEL_OP_INST(BM_INST_TYPE_JMP_IF_TRUE)   //
+        else TRY_PARSE_ULONG_OP_INST(BM_INST_TYPE_SWAP)                   //
+        else TRY_PARSE_ULONG_OP_INST(BM_INST_TYPE_NATIVE)                 //
+        else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_DROP)                      //
         else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_PLUS_INT)                  //
         else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_MINUS_INT)                 //
         else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_MULTIPLY_INT)              //
@@ -180,6 +168,9 @@ static void basm_translate_source(Basm *basm, StringView source) {
   }
 
 #undef TRY_PARSE_NO_OP_INST
+#undef TRY_PARSE_ULONG_OP_INST
+#undef TRY_PARSE_WORD_OP_INST
+#undef TRY_PARSE_ULONG_OR_LABEL_OP_INST
 }
 
 static bool basm_assemble_file(Basm *basm, const char *input_path,
