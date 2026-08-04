@@ -20,6 +20,15 @@ static BmError bm_alloc(Bm *bm) {
   return BM_ERROR_OK;
 }
 
+static BmError bm_free(Bm *bm) {
+  BmWord ptr_arg;
+  BM_CATCH_ERROR(bm_pop_word(bm, &ptr_arg));
+
+  free(ptr_arg.ptr);
+
+  return BM_ERROR_OK;
+}
+
 static char *shift(int *argc, char ***argv) {
   if (*argc < 1)
     return NULL;
@@ -87,6 +96,11 @@ int main(int argc, char *argv[]) {
   }
 
   if (!bm_push_native_func(&bm, bm_alloc)) {
+    fprintf(stderr, "Error: failed to add native function.\n");
+    return EXIT_FAILURE;
+  }
+
+  if (!bm_push_native_func(&bm, bm_free)) {
     fprintf(stderr, "Error: failed to add native function.\n");
     return EXIT_FAILURE;
   }

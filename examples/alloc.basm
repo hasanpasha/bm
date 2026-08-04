@@ -3,4 +3,5 @@ main:
     push 420
     native 0
     dump
+    native 1
     hlt
