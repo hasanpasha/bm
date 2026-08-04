@@ -48,6 +48,5 @@ loop:
 
     # only pi remains on the stack
     native 2
-    drop
 
     hlt

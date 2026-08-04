@@ -29,5 +29,4 @@ loop:
     
     drop
     drop
-    drop
     hlt

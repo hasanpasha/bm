@@ -28,7 +28,7 @@ static BmError bm_free(Bm *bm) {
 
 static BmError bm_debug_print(Bm *bm) {
   BmWord word;
-  BM_CATCH_ERROR(bm_get_word(bm, 0, &word));
+  BM_CATCH_ERROR(bm_pop_word(bm, &word));
   bm_word_dump(word, stdout);
   fputc('\n', stdout);
   return BM_ERROR_OK;
