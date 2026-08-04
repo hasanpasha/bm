@@ -7,6 +7,20 @@
 
 Bm bm = {0};
 
+BmError bm_alloc(Bm *bm) {
+  BmError err = BM_ERROR_OK;
+
+  BmWord size_arg;
+  if ((err = bm_stack_pop(&bm->stack, &size_arg)) != BM_ERROR_OK)
+    return err;
+
+  const BmWord ptr = {.ptr = malloc(size_arg.u64)};
+  if ((err = bm_stack_push(&bm->stack, ptr)) != BM_ERROR_OK)
+    return err;
+
+  return err;
+}
+
 static char *shift(int *argc, char ***argv) {
   if (*argc < 1)
     return NULL;
