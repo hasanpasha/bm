@@ -1,4 +1,4 @@
-CFLAGS:=-std=c23 -Wall -Wextra -Wswitch-enum -Wmissing-prototypes -pedantic -Isrc
+CFLAGS:=-std=c11 -Wall -Wextra -Wswitch-enum -Wmissing-prototypes -pedantic -Isrc
 
 ifndef BUILD_DIR
 BUILD_DIR:=build
