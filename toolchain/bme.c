@@ -14,9 +14,6 @@ static BmError bm_alloc(Bm *bm) {
   const BmWord ptr = {.ptr = malloc(size_arg.u64)};
   BM_CATCH_ERROR(bm_push_word(bm, ptr));
 
-  char *buffer = (char *)ptr.ptr;
-  buffer[10] = 'a';
-
   return BM_ERROR_OK;
 }
 
