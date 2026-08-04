@@ -1,5 +1,53 @@
-push 22.0f64
-push 7.0f64
-divf
-dump
-hlt
+# Leibniz formula for π
+# n = (4/1) - (4/3) + (4/5) - (4/7) + (4/9) - (4/11) + (4/13) ...
+# Take 4 and subtract 4 divided by 3. then add 4 diveded by 5.
+# Then subtract 4 divided by 7. continue alternating between adding
+# and subrtacting fractions with a numerator of 4 and denominator of
+# each subsequent odd number. The more times you do this, the closer
+# you will get to pi.
+
+push 4f64               # acc (result of first division)
+push 3f64               # denominator
+push 750000             # counter
+
+loop:
+    push 4f64
+    dup 2
+    divf
+    swap 1
+    swap 3
+    swap 1
+    minusf
+    swap 2
+    swap 1
+    push 2f64
+    plusf
+    swap 1
+
+    push 4f64
+    dup 2
+    divf
+    swap 1
+    swap 3
+    swap 1
+    plusf
+
+    dump
+
+    swap 2
+    swap 1
+    push 2f64
+    plusf
+    swap 1
+    
+    push 1
+    minusi
+    dup 0
+    dump
+    push 0
+    eq
+    not
+
+    jt loop
+
+    hlt
