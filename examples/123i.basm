@@ -3,5 +3,5 @@ push 2
 push 3
 plusi
 plusi
-#dump
+native 2
 hlt

@@ -26,6 +26,14 @@ static BmError bm_free(Bm *bm) {
   return BM_ERROR_OK;
 }
 
+static BmError bm_debug_print(Bm *bm) {
+  BmWord word;
+  BM_CATCH_ERROR(bm_get_word(bm, 0, &word));
+  bm_word_dump(word, stdout);
+  fputc('\n', stdout);
+  return BM_ERROR_OK;
+}
+
 static char *shift(int *argc, char ***argv) {
   if (*argc < 1)
     return NULL;
@@ -98,6 +106,11 @@ int main(int argc, char *argv[]) {
   }
 
   if (!bm_push_native_func(&bm, bm_free)) {
+    fprintf(stderr, "Error: failed to add native function.\n");
+    return EXIT_FAILURE;
+  }
+
+  if (!bm_push_native_func(&bm, bm_debug_print)) {
     fprintf(stderr, "Error: failed to add native function.\n");
     return EXIT_FAILURE;
   }

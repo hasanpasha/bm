@@ -25,7 +25,7 @@ loop:
 
     jt loop
 
-    #dump
+    native 2
     
     drop
     drop

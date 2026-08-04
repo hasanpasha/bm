@@ -2,6 +2,6 @@
 main:
     push 420
     native 0
-    #dump
+    native 2
     native 1
     hlt
