@@ -69,7 +69,7 @@ static void usage(FILE *stream, const char *program) {
 
 #define LOAD_NATIVE(native_func)                                               \
   if (!bm_push_native_func(&bm, native_func))                                  \
-    WARN("failed to load native function '%s'.", #native_func);
+    PANIC("failed to load native function '%s'.", #native_func);
 
 int main(int argc, char *argv[]) {
   const char *program = shift(&argc, &argv);
