@@ -37,9 +37,7 @@ static uint64_t basm_find_label(const Basm *basm, StringView name) {
     }
   }
 
-  fprintf(stderr, "Error: failed to resolve label '" SV_FMT "'.\n",
-          SV_ARG(name));
-  exit(1);
+  PANIC("failed to resolve label '" SV_FMT "'.", SV_ARG(name));
 }
 
 static void basm_push_label(Basm *basm, StringView name, BmInstAddr addr) {
