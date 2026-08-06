@@ -41,7 +41,7 @@ loop:
     minusi
 
     dup 0               # duplicate current counter since jt consumes top of stack
-    jt  loop
+    jmt  loop
 
     drop                # drop counter
     drop                # drop denominator

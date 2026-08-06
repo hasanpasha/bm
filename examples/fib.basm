@@ -16,5 +16,5 @@ loop:   swap 1
         dup 0
         swap 3
         swap 1
-        jt loop
+        jmt loop
         hlt

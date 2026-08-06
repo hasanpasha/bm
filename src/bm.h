@@ -248,7 +248,7 @@ const char *bm_inst_type_readable_name(BmInstType inst_type) {
   case BM_INST_TYPE_RETURN:
     return "ret";
   case BM_INST_TYPE_JMP_IF_TRUE:
-    return "jt";
+    return "jmt";
   case BM_INST_TYPE_TEST_EQUALS:
     return "eq";
   case BM_INST_TYPE_TEST_GREATER_EQUALS_FLOAT:

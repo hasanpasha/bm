@@ -23,7 +23,7 @@ loop:
     push 69f64
     gef
 
-    jt loop
+    jmt loop
 
     native 4        # print f64
     
