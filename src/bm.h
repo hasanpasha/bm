@@ -81,7 +81,7 @@ typedef enum BM_INST_TYPE {
   BM_INST_TYPE_SUBTRACT_INT,
   BM_INST_TYPE_MULTIPLY_INT,
   BM_INST_TYPE_DIVIDE_INT,
-  BM_INST_TYPE_PLUS_FLOAT,
+  BM_INST_TYPE_ADD_FLOAT,
   BM_INST_TYPE_MINUS_FLOAT,
   BM_INST_TYPE_MULTIPLY_FLOAT,
   BM_INST_TYPE_DIVIDE_FLOAT,
@@ -233,8 +233,8 @@ const char *bm_inst_type_readable_name(BmInstType inst_type) {
     return "multi";
   case BM_INST_TYPE_DIVIDE_INT:
     return "divi";
-  case BM_INST_TYPE_PLUS_FLOAT:
-    return "plusf";
+  case BM_INST_TYPE_ADD_FLOAT:
+    return "addf";
   case BM_INST_TYPE_MINUS_FLOAT:
     return "minusf";
   case BM_INST_TYPE_MULTIPLY_FLOAT:
@@ -284,7 +284,7 @@ bool bm_inst_type_has_operand(BmInstType inst_type) {
   case BM_INST_TYPE_SUBTRACT_INT:
   case BM_INST_TYPE_MULTIPLY_INT:
   case BM_INST_TYPE_DIVIDE_INT:
-  case BM_INST_TYPE_PLUS_FLOAT:
+  case BM_INST_TYPE_ADD_FLOAT:
   case BM_INST_TYPE_MINUS_FLOAT:
   case BM_INST_TYPE_MULTIPLY_FLOAT:
   case BM_INST_TYPE_DIVIDE_FLOAT:
@@ -317,8 +317,8 @@ const char *bm_inst_type_string(BmInstType inst_type) {
     return "MULTIPLY_INT";
   case BM_INST_TYPE_DIVIDE_INT:
     return "DIVIDE_INT";
-  case BM_INST_TYPE_PLUS_FLOAT:
-    return "PLUS_FLOAT";
+  case BM_INST_TYPE_ADD_FLOAT:
+    return "ADD_FLOAT";
   case BM_INST_TYPE_MINUS_FLOAT:
     return "MINUS_FLOAT";
   case BM_INST_TYPE_MULTIPLY_FLOAT:
@@ -569,7 +569,7 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
 
     BM_CATCH_ERROR(bm_push_word(bm, (BmWord){.i64 = result}));
   } break;
-  case BM_INST_TYPE_PLUS_FLOAT:
+  case BM_INST_TYPE_ADD_FLOAT:
   case BM_INST_TYPE_MINUS_FLOAT:
   case BM_INST_TYPE_MULTIPLY_FLOAT:
   case BM_INST_TYPE_DIVIDE_FLOAT: {
@@ -580,7 +580,7 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
     double a = ao.f64;
     double b = bo.f64;
     double result = 0;
-    if (inst.type == BM_INST_TYPE_PLUS_FLOAT) {
+    if (inst.type == BM_INST_TYPE_ADD_FLOAT) {
       result = a + b;
     } else if (inst.type == BM_INST_TYPE_MINUS_FLOAT) {
       result = a - b;

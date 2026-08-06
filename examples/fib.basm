@@ -9,7 +9,7 @@ loop:   swap 1
         dup 0
         native 4
         dup 1
-        plusf
+        addf
         swap 2
         push 1
         subi

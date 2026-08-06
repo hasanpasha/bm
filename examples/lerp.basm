@@ -12,7 +12,7 @@ lerpf:
     swap 1
     minusf
     multf
-    plusf
+    addf
     swap 1
     ret
 
