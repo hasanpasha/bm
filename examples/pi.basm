@@ -49,6 +49,4 @@ loop:
     # only pi remains on the stack
     native 4            # print f64
 
-    xx
-
     hlt
