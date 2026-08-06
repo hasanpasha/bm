@@ -12,7 +12,7 @@ loop:   swap 1
         plusf
         swap 2
         push 1
-        minusi
+        subi
         dup 0
         swap 3
         swap 1

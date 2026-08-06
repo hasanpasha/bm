@@ -38,7 +38,7 @@ loop:
     # decrement counter 
     swap 2
     push 1
-    minusi
+    subi
 
     dup 0               # duplicate current counter since jt consumes top of stack
     jmt  loop

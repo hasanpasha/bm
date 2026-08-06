@@ -78,7 +78,7 @@ typedef enum BM_INST_TYPE {
   BM_INST_TYPE_PUSH,
   BM_INST_TYPE_DROP,
   BM_INST_TYPE_ADD_INT,
-  BM_INST_TYPE_MINUS_INT,
+  BM_INST_TYPE_SUBTRACT_INT,
   BM_INST_TYPE_MULTIPLY_INT,
   BM_INST_TYPE_DIVIDE_INT,
   BM_INST_TYPE_PLUS_FLOAT,
@@ -227,8 +227,8 @@ const char *bm_inst_type_readable_name(BmInstType inst_type) {
     return "drop";
   case BM_INST_TYPE_ADD_INT:
     return "addi";
-  case BM_INST_TYPE_MINUS_INT:
-    return "minusi";
+  case BM_INST_TYPE_SUBTRACT_INT:
+    return "subi";
   case BM_INST_TYPE_MULTIPLY_INT:
     return "multi";
   case BM_INST_TYPE_DIVIDE_INT:
@@ -281,7 +281,7 @@ bool bm_inst_type_has_operand(BmInstType inst_type) {
   case BM_INST_TYPE_HALT:
   case BM_INST_TYPE_DROP:
   case BM_INST_TYPE_ADD_INT:
-  case BM_INST_TYPE_MINUS_INT:
+  case BM_INST_TYPE_SUBTRACT_INT:
   case BM_INST_TYPE_MULTIPLY_INT:
   case BM_INST_TYPE_DIVIDE_INT:
   case BM_INST_TYPE_PLUS_FLOAT:
@@ -311,8 +311,8 @@ const char *bm_inst_type_string(BmInstType inst_type) {
     return "drop";
   case BM_INST_TYPE_ADD_INT:
     return "ADD_INT";
-  case BM_INST_TYPE_MINUS_INT:
-    return "MINUS_INT";
+  case BM_INST_TYPE_SUBTRACT_INT:
+    return "SUBTRACT_INT";
   case BM_INST_TYPE_MULTIPLY_INT:
     return "MULTIPLY_INT";
   case BM_INST_TYPE_DIVIDE_INT:
@@ -544,7 +544,7 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
     BM_CATCH_ERROR(bm_pop_word(bm, NULL));
     break;
   case BM_INST_TYPE_ADD_INT:
-  case BM_INST_TYPE_MINUS_INT:
+  case BM_INST_TYPE_SUBTRACT_INT:
   case BM_INST_TYPE_MULTIPLY_INT:
   case BM_INST_TYPE_DIVIDE_INT: {
     BmWord ao, bo;
@@ -557,7 +557,7 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
 
     if (inst.type == BM_INST_TYPE_ADD_INT) {
       result = a + b;
-    } else if (inst.type == BM_INST_TYPE_MINUS_INT) {
+    } else if (inst.type == BM_INST_TYPE_SUBTRACT_INT) {
       result = a - b;
     } else if (inst.type == BM_INST_TYPE_MULTIPLY_INT) {
       result = a * b;
