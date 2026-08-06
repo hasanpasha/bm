@@ -16,6 +16,23 @@
 #define BM_UNREACHABLE() abort()
 #endif
 
+#define LOG(stream, level, ...)                                                \
+  do {                                                                         \
+    fprintf((stream), "%s:%d:%s:%s: ", __FILE__, __LINE__, __func__, level);   \
+    fprintf((stream), __VA_ARGS__);                                            \
+    fputc('\n', (stream));                                                     \
+  } while (0);
+
+#define DEBUG(...) LOG(stdout, "debug", __VA_ARGS__)
+
+#define ERROR(...) LOG(stderr, "error", __VA_ARGS__)
+
+#define PANIC(...)                                                             \
+  do {                                                                         \
+    ERROR(__VA_ARGS__);                                                        \
+    exit(EXIT_FAILURE);                                                        \
+  } while (0);
+
 typedef enum BM_ERROR {
   BM_ERROR_OK,
   BM_ERROR_STACK_OVERFLOW,

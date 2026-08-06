@@ -151,11 +151,7 @@ static void basm_translate_source(Basm *basm, StringView source) {
         else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_NOT)                       //
         else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_TEST_GREATER_EQUALS_FLOAT) //
         else TRY_PARSE_NO_OP_INST(BM_INST_TYPE_RETURN)                    //
-        else {
-      fprintf(stderr, "Error: unknown instruction '" SV_FMT "'\n",
-              SV_ARG(inst_name));
-      exit(1);
-    }
+        else PANIC("unknown instruction '" SV_FMT "'.", SV_ARG(inst_name));
 
     bm_program_push(&basm->prg, inst);
   }
