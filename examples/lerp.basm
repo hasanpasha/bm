@@ -19,7 +19,7 @@ lerpf:
 main:
     push 69f64
     push 420f64
-    push 10f64
+    push 1f64
 
 loop:
 
@@ -34,7 +34,7 @@ loop:
     gef
     jmt end
 
-    push 0.5f64
+    push 0.01f64
     minusf
     
     jmp loop
