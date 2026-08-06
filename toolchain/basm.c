@@ -198,19 +198,17 @@ int main(int argc, char *argv[]) {
   const char *input_file = shift(&argc, &argv);
   if (input_file == NULL) {
     usage(stderr, program);
-    fprintf(stderr, "Error: expected input\n");
-    return EXIT_FAILURE;
+    PANIC("expected input");
   }
 
   const char *output_file = shift(&argc, &argv);
   if (output_file == NULL) {
     usage(stderr, program);
-    fprintf(stderr, "Error: expected output\n");
-    return EXIT_FAILURE;
+    PANIC("expected output");
   }
 
   if (!basm_assemble_file(&basm, input_file, output_file))
-    return EXIT_FAILURE;
+    PANIC("failed to assemble '%s'", input_file);
 
   return EXIT_SUCCESS;
 }

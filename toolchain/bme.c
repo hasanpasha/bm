@@ -90,8 +90,7 @@ int main(int argc, char *argv[]) {
         char *limit_arg = shift(&argc, &argv);
         if (limit_arg == NULL) {
           usage(stderr, program);
-          fprintf(stderr, "Error: expected limit value.\n");
-          return EXIT_FAILURE;
+          PANIC("expected limit value");
         }
 
         limit = (int)strtol(limit_arg, NULL, 10);
@@ -99,14 +98,12 @@ int main(int argc, char *argv[]) {
         debug = true;
       } else {
         usage(stderr, program);
-        fprintf(stderr, "Error: unknown flag '%s'\n", flag);
-        return EXIT_FAILURE;
+        PANIC("unknown flag '%s'", flag);
       }
     } else {
       if (input_file != NULL) {
         usage(stderr, program);
-        fprintf(stderr, "Error: <input.bm> provided more than once.\n");
-        return EXIT_FAILURE;
+        PANIC("<input.bm> provided more than once.");
       }
 
       input_file = arg;
@@ -115,8 +112,7 @@ int main(int argc, char *argv[]) {
 
   if (input_file == NULL) {
     usage(stderr, program);
-    fprintf(stderr, "Error: expected input.\n");
-    return EXIT_FAILURE;
+    PANIC("expected input.");
   }
 
   if (!bm_program_load_from_file(&bm.program, input_file))
@@ -132,9 +128,8 @@ int main(int argc, char *argv[]) {
   if (!debug) {
     BmError error = bm_execute_program(&bm, limit);
     if (error != BM_ERROR_OK) {
-      fprintf(stderr, "Error: %s\n", bm_error_string(error));
       bm_stack_dump(&bm.stack, stderr);
-      return EXIT_FAILURE;
+      PANIC("%s", bm_error_string(error));
     }
   } else {
     BmError error = BM_ERROR_OK;
@@ -142,19 +137,17 @@ int main(int argc, char *argv[]) {
 
     while (!bm.halted && limit != 0) {
 
-      if ((error = bm_pop_inst(&bm, &inst)) != BM_ERROR_OK) {
-        fprintf(stderr, "Error: %s\n", bm_error_string(error));
-        return EXIT_FAILURE;
-      }
+      if ((error = bm_pop_inst(&bm, &inst)) != BM_ERROR_OK)
+        PANIC("%s", bm_error_string(error));
+
       bm_inst_dump(inst, stdout);
       printf("\n");
       bm_stack_dump(&bm.stack, stdout);
 
       (void)fgetc(stdin);
       if ((error = bm_execute_inst(&bm, inst)) != BM_ERROR_OK) {
-        fprintf(stderr, "Error: %s\n", bm_error_string(error));
         bm_stack_dump(&bm.stack, stderr);
-        return EXIT_FAILURE;
+        PANIC("%s", bm_error_string(error));
       }
 
       if (limit > 0)
