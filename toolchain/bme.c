@@ -67,6 +67,10 @@ static void usage(FILE *stream, const char *program) {
   fprintf(stream, "Usage: %s <input.bm> [-h] [-l limit] [-d]\n", program);
 }
 
+#define LOAD_NATIVE(native_func)                                               \
+  if (!bm_push_native_func(&bm, native_func))                                  \
+    WARN("failed to load native function '%s'.", #native_func);
+
 int main(int argc, char *argv[]) {
   const char *program = shift(&argc, &argv);
 
@@ -115,40 +119,15 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
-  if (!bm_program_load_from_file(&bm.program, input_file)) {
-    fprintf(stderr, "Error: failed to load program from '%s'.\n", input_file);
-    return EXIT_FAILURE;
-  }
+  if (!bm_program_load_from_file(&bm.program, input_file))
+    PANIC("failed to load program from '%s'.", input_file);
 
-  if (!bm_push_native_func(&bm, bm_alloc)) {
-    fprintf(stderr, "Error: failed to add native function.\n");
-    return EXIT_FAILURE;
-  }
-
-  if (!bm_push_native_func(&bm, bm_free)) {
-    fprintf(stderr, "Error: failed to add native function.\n");
-    return EXIT_FAILURE;
-  }
-
-  if (!bm_push_native_func(&bm, bm_debug_i64)) {
-    fprintf(stderr, "Error: failed to add native function.\n");
-    return EXIT_FAILURE;
-  }
-
-  if (!bm_push_native_func(&bm, bm_debug_u64)) {
-    fprintf(stderr, "Error: failed to add native function.\n");
-    return EXIT_FAILURE;
-  }
-
-  if (!bm_push_native_func(&bm, bm_debug_f64)) {
-    fprintf(stderr, "Error: failed to add native function.\n");
-    return EXIT_FAILURE;
-  }
-
-  if (!bm_push_native_func(&bm, bm_debug_ptr)) {
-    fprintf(stderr, "Error: failed to add native function.\n");
-    return EXIT_FAILURE;
-  }
+  LOAD_NATIVE(bm_alloc);
+  LOAD_NATIVE(bm_free);
+  LOAD_NATIVE(bm_debug_i64);
+  LOAD_NATIVE(bm_debug_u64);
+  LOAD_NATIVE(bm_debug_f64);
+  LOAD_NATIVE(bm_debug_ptr);
 
   if (!debug) {
     BmError error = bm_execute_program(&bm, limit);
