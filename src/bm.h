@@ -25,6 +25,8 @@
 
 #define DEBUG(...) LOG(stdout, "debug", __VA_ARGS__)
 
+#define WARN(...) LOG(stderr, "warn", __VA_ARGS__)
+
 #define ERROR(...) LOG(stderr, "error", __VA_ARGS__)
 
 #define PANIC(...)                                                             \
