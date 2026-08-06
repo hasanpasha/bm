@@ -271,6 +271,7 @@ bool bm_inst_type_has_operand(BmInstType inst_type) {
   switch (inst_type) {
   case BM_INST_TYPE_PUSH:
   case BM_INST_TYPE_JUMP:
+  case BM_INST_TYPE_JMP_IF_TRUE:
   case BM_INST_TYPE_CALL:
   case BM_INST_TYPE_DUPLICATE:
   case BM_INST_TYPE_SWAP:
@@ -287,7 +288,6 @@ bool bm_inst_type_has_operand(BmInstType inst_type) {
   case BM_INST_TYPE_MINUS_FLOAT:
   case BM_INST_TYPE_MULTIPLY_FLOAT:
   case BM_INST_TYPE_DIVIDE_FLOAT:
-  case BM_INST_TYPE_JMP_IF_TRUE:
   case BM_INST_TYPE_TEST_EQUALS:
   case BM_INST_TYPE_TEST_GREATER_EQUALS_FLOAT:
   case BM_INST_TYPE_NOT:
