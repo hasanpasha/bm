@@ -183,8 +183,6 @@ BmError bm_execute_program(Bm *bm, int limit);
 
 #ifdef BM_IMPLEMENTATION
 
-#include <bm.h>
-
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
