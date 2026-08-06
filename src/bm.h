@@ -646,7 +646,7 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
     BmWord ao, bo, result;
     BM_CATCH_ERROR(bm_pop_word(bm, &bo));
     BM_CATCH_ERROR(bm_pop_word(bm, &ao));
-    result.u64 = bo.f64 >= ao.f64;
+    result.u64 = ao.f64 >= bo.f64;
     BM_CATCH_ERROR(bm_push_word(bm, result));
   } break;
   case BM_INST_TYPE_NATIVE: {

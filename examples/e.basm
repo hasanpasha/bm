@@ -19,8 +19,8 @@ loop:
     swap 1
     swap 2
 
-    dup 2
     push 69f64
+    dup 3
     gef
 
     jmt loop
