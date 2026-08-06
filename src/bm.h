@@ -375,21 +375,19 @@ void bm_dump(const Bm *bm, FILE *stream) {
 bool bm_program_load_from_file(BmProgram *prg, const char *file_path) {
   FILE *f = fopen(file_path, "rb");
   if (f == NULL) {
-    fprintf(stderr, "Error: could not open file '%s': %s\n", file_path,
-            strerror(errno));
+    ERROR("could not open file '%s': %s.", file_path, strerror(errno));
     return false;
   }
 
   if (fseek(f, 0, SEEK_END) < 0) {
-    fprintf(stderr, "Error: could not seek to the end of file '%s': %s.\n",
-            file_path, strerror(errno));
+    ERROR("could not seek to the end of file '%s': %s.", file_path,
+          strerror(errno));
     return false;
   }
 
   long pos = ftell(f);
   if (pos < 0) {
-    fprintf(stderr, "Error: could get size of file '%s': %s.\n", file_path,
-            strerror(errno));
+    ERROR("could get size of file '%s': %s.", file_path, strerror(errno));
     return false;
   }
 
@@ -397,28 +395,25 @@ bool bm_program_load_from_file(BmProgram *prg, const char *file_path) {
   size_t program_size = file_size / sizeof(BmInst);
 
   if (program_size >= (BM_PROGRAM_CAP)) {
-    fprintf(stderr, "Error: program is too big: %lu\n", program_size);
+    ERROR("program is too big: %lu", program_size);
     return false;
   }
 
   if (fseek(f, 0, SEEK_SET) < 0) {
-    fprintf(stderr,
-            "Error: could not seek to the beginning of file '%s': %s.\n",
-            file_path, strerror(errno));
+    ERROR("could not seek to the beginning of file '%s': %s.", file_path,
+          strerror(errno));
     return false;
   }
 
   size_t read_insts = fread(prg->ptr, sizeof(BmInst), program_size, f);
   if (read_insts < program_size) {
-    fprintf(stderr,
-            "Error: could not load the entire program file '%s' of size %lu.\n",
-            file_path, program_size);
+    ERROR("could not load the entire program file '%s' of size %lu.", file_path,
+          program_size);
     return false;
   }
 
   if (ferror(f)) {
-    fprintf(stderr, "Error: could not read from file '%s': %s.\n", file_path,
-            strerror(errno));
+    ERROR("could not read from file '%s': %s.", file_path, strerror(errno));
     return false;
   }
 
@@ -432,15 +427,13 @@ bool bm_program_load_from_file(BmProgram *prg, const char *file_path) {
 bool bm_program_save_to_file(const BmProgram *prg, const char *file_path) {
   FILE *f = fopen(file_path, "wb");
   if (f == NULL) {
-    fprintf(stderr, "Error: could not open file '%s': %s\n", file_path,
-            strerror(errno));
+    ERROR("could not open file '%s': %s", file_path, strerror(errno));
     return false;
   }
 
   fwrite(prg->ptr, sizeof(BmInst), prg->len, f);
   if (ferror(f)) {
-    fprintf(stderr, "Error: could not write to file '%s': %s.\n", file_path,
-            strerror(errno));
+    ERROR("could not write to file '%s': %s.", file_path, strerror(errno));
     return false;
   }
 
