@@ -10,7 +10,7 @@ lerpf:
     dup 0
     swap 3
     swap 1
-    minusf
+    subf
     multf
     addf
     swap 1
@@ -35,7 +35,7 @@ loop:
     jmt end
 
     push 0.01f64
-    minusf
+    subf
     
     jmp loop
 

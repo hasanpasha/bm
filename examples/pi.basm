@@ -22,7 +22,7 @@ loop:
 
     # calculate with current denominator
     divf                #       (4/n)
-    minusf              # acc - ^
+    subf              # acc - ^
 
     # calculate next denominator
     push 4f64

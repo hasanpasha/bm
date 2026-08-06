@@ -82,7 +82,7 @@ typedef enum BM_INST_TYPE {
   BM_INST_TYPE_MULTIPLY_INT,
   BM_INST_TYPE_DIVIDE_INT,
   BM_INST_TYPE_ADD_FLOAT,
-  BM_INST_TYPE_MINUS_FLOAT,
+  BM_INST_TYPE_SUBTRACT_FLOAT,
   BM_INST_TYPE_MULTIPLY_FLOAT,
   BM_INST_TYPE_DIVIDE_FLOAT,
   BM_INST_TYPE_JUMP,
@@ -235,8 +235,8 @@ const char *bm_inst_type_readable_name(BmInstType inst_type) {
     return "divi";
   case BM_INST_TYPE_ADD_FLOAT:
     return "addf";
-  case BM_INST_TYPE_MINUS_FLOAT:
-    return "minusf";
+  case BM_INST_TYPE_SUBTRACT_FLOAT:
+    return "subf";
   case BM_INST_TYPE_MULTIPLY_FLOAT:
     return "multf";
   case BM_INST_TYPE_DIVIDE_FLOAT:
@@ -285,7 +285,7 @@ bool bm_inst_type_has_operand(BmInstType inst_type) {
   case BM_INST_TYPE_MULTIPLY_INT:
   case BM_INST_TYPE_DIVIDE_INT:
   case BM_INST_TYPE_ADD_FLOAT:
-  case BM_INST_TYPE_MINUS_FLOAT:
+  case BM_INST_TYPE_SUBTRACT_FLOAT:
   case BM_INST_TYPE_MULTIPLY_FLOAT:
   case BM_INST_TYPE_DIVIDE_FLOAT:
   case BM_INST_TYPE_TEST_EQUALS:
@@ -319,8 +319,8 @@ const char *bm_inst_type_string(BmInstType inst_type) {
     return "DIVIDE_INT";
   case BM_INST_TYPE_ADD_FLOAT:
     return "ADD_FLOAT";
-  case BM_INST_TYPE_MINUS_FLOAT:
-    return "MINUS_FLOAT";
+  case BM_INST_TYPE_SUBTRACT_FLOAT:
+    return "SUBTRACT_FLOAT";
   case BM_INST_TYPE_MULTIPLY_FLOAT:
     return "MULTIPLY_FLOAT";
   case BM_INST_TYPE_DIVIDE_FLOAT:
@@ -570,7 +570,7 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
     BM_CATCH_ERROR(bm_push_word(bm, (BmWord){.i64 = result}));
   } break;
   case BM_INST_TYPE_ADD_FLOAT:
-  case BM_INST_TYPE_MINUS_FLOAT:
+  case BM_INST_TYPE_SUBTRACT_FLOAT:
   case BM_INST_TYPE_MULTIPLY_FLOAT:
   case BM_INST_TYPE_DIVIDE_FLOAT: {
     BmWord ao, bo;
@@ -582,7 +582,7 @@ BmError bm_execute_inst(Bm *bm, BmInst inst) {
     double result = 0;
     if (inst.type == BM_INST_TYPE_ADD_FLOAT) {
       result = a + b;
-    } else if (inst.type == BM_INST_TYPE_MINUS_FLOAT) {
+    } else if (inst.type == BM_INST_TYPE_SUBTRACT_FLOAT) {
       result = a - b;
     } else if (inst.type == BM_INST_TYPE_MULTIPLY_FLOAT) {
       result = a * b;
