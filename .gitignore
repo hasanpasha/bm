@@ -1,4 +1,6 @@
-build
-.vscode
-*.bm
-*.vsix
+.vscode/
+**/*.bm
+**/*.vsix
+**/basm
+**/bme
+**/debasm
