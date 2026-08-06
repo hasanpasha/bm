@@ -449,8 +449,8 @@ void bm_program_push(BmProgram *prg, BmInst inst) {
 
 void bm_stack_dump(const BmStack *stack, FILE *stream) {
   fprintf(stream, "stack:\n");
-  for (size_t i = 0; i < stack->idx; i++) {
-    BmWord word = stack->ptr[i];
+  for (size_t i = stack->idx; i > 0; i--) {
+    BmWord word = stack->ptr[i - 1];
     bm_word_dump(word, stream);
     fputc('\n', stream);
   }
