@@ -19,20 +19,25 @@ lerpf:
 main:
     push 69f64
     push 420f64
+    push 10f64
+
+loop:
+
+    dup 2
+    dup 2
+    dup 2
+    call lerpf
+    native 4
+    
     push 0f64
-    call lerpf
-    native 4
+    dup 1
+    gef
+    jmt end
 
-    push 69f64
-    push 420f64
-    push 1f64
-    call lerpf
-    native 4
-
-    push 69f64
-    push 420f64
     push 0.5f64
-    call lerpf
-    native 4
+    minusf
+    
+    jmp loop
 
+end:
     hlt
