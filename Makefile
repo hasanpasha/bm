@@ -28,4 +28,5 @@ $(BUILD_DIR)/examples:
 	mkdir -p $@
 
 clean:
-	rm -rf $(BUILD_DIR)
+	rm -f $(TOOLCHAIN)
+	rm -f $(EXAMPLES)
