@@ -6,17 +6,17 @@
 # each subsequent odd number. The more times you do this, the closer
 # you will get to pi.
 
-    push 4f64               # acc (result of first division)
-    push 3f64               # denominator
+    push 4.0               # acc (result of first division)
+    push 3.0               # denominator
     push 750000             # counter
 
 loop:
     swap 2              # swap counter (top of stack) with current acc
 
     # calculate next denominator
-    push 4f64
+    push 4.0
     dup 2
-    push 2f64
+    push 2.0
     addf
     swap 3
 
@@ -25,9 +25,9 @@ loop:
     subf              # acc - ^
 
     # calculate next denominator
-    push 4f64
+    push 4.0
     dup 2
-    push 2f64
+    push 2.0
     addf
     swap 3
 
