@@ -98,11 +98,9 @@ typedef enum BM_INST_TYPE {
   BM_NUM_OF_INST_TYPES,
 } BmInstType;
 
-const char *bm_inst_type_readable_name(BmInstType inst_type);
+const char *bm_inst_type_string(BmInstType inst_type);
 
 bool bm_inst_type_has_operand(BmInstType inst_type);
-
-const char *bm_inst_type_string(BmInstType inst_type);
 
 typedef struct BM_INST {
   BmInstType type;
@@ -215,7 +213,7 @@ void bm_word_dump(BmWord word, FILE *stream) {
           word.f64, word.ptr);
 }
 
-const char *bm_inst_type_readable_name(BmInstType inst_type) {
+const char *bm_inst_type_string(BmInstType inst_type) {
   switch (inst_type) {
   case BM_INST_TYPE_NO_OPERATION:
     return "nop";
@@ -299,65 +297,12 @@ bool bm_inst_type_has_operand(BmInstType inst_type) {
   }
 }
 
-const char *bm_inst_type_string(BmInstType inst_type) {
-  switch (inst_type) {
-  case BM_INST_TYPE_NO_OPERATION:
-    return "NO_OPERATION";
-  case BM_INST_TYPE_HALT:
-    return "HALT";
-  case BM_INST_TYPE_PUSH:
-    return "PUSH";
-  case BM_INST_TYPE_DROP:
-    return "drop";
-  case BM_INST_TYPE_ADD_INT:
-    return "ADD_INT";
-  case BM_INST_TYPE_SUBTRACT_INT:
-    return "SUBTRACT_INT";
-  case BM_INST_TYPE_MULTIPLY_INT:
-    return "MULTIPLY_INT";
-  case BM_INST_TYPE_DIVIDE_INT:
-    return "DIVIDE_INT";
-  case BM_INST_TYPE_ADD_FLOAT:
-    return "ADD_FLOAT";
-  case BM_INST_TYPE_SUBTRACT_FLOAT:
-    return "SUBTRACT_FLOAT";
-  case BM_INST_TYPE_MULTIPLY_FLOAT:
-    return "MULTIPLY_FLOAT";
-  case BM_INST_TYPE_DIVIDE_FLOAT:
-    return "DIVIDE_FLOAT";
-  case BM_INST_TYPE_JUMP:
-    return "JUMP";
-  case BM_INST_TYPE_CALL:
-    return "CALL";
-  case BM_INST_TYPE_RETURN:
-    return "RETURN";
-  case BM_INST_TYPE_JMP_IF_TRUE:
-    return "JMP_IF_TRUE";
-  case BM_INST_TYPE_TEST_EQUALS:
-    return "TEST_EQUALS";
-  case BM_INST_TYPE_TEST_GREATER_EQUALS_FLOAT:
-    return "TEST_GREATER_EQUALS_FLOAT";
-  case BM_INST_TYPE_DUPLICATE:
-    return "DUPLICATE";
-  case BM_INST_TYPE_SWAP:
-    return "SWAP";
-  case BM_INST_TYPE_NOT:
-    return "NOT";
-  case BM_INST_TYPE_NATIVE:
-    return "NATIVE";
-  case BM_NUM_OF_INST_TYPES:
-  default:
-    BM_UNREACHABLE();
-  }
-}
-
 void bm_inst_dump(BmInst inst, FILE *stream) {
-  fprintf(stream, "INST_%s", bm_inst_type_string(inst.type));
+  fprintf(stream, "%s ", bm_inst_type_string(inst.type));
   if (bm_inst_type_has_operand(inst.type)) {
     fputc('(', stream);
     bm_word_dump(inst.operand, stream);
     fputc(')', stream);
-    // fprintf(stream, "(%ld)", inst.operand.i64);
   }
 }
 

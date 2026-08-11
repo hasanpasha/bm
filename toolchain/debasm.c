@@ -18,7 +18,7 @@ int main(int argc, char const *argv[]) {
   for (uint64_t i = 0; i < prg.len; i++) {
     BmInst inst = prg.ptr[i];
 
-    printf("%s", bm_inst_type_readable_name(inst.type));
+    printf("%s", bm_inst_type_string(inst.type));
     if (bm_inst_type_has_operand(inst.type)) {
       printf(" %ld", inst.operand.i64);
     }
