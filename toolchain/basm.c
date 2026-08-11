@@ -13,31 +13,31 @@
 #include "basm/parser.h"
 #include "basm/token.h"
 
-#define BASM_LABELS_CAP 1024
+#define BASM_VARIABLES_CAP 1024
 #define BASM_DEFERRED_OPERANDS_CAP 1024
 
-typedef struct BASM_LABEL {
+typedef struct BASM_VARIABLE {
   StringView name;
   BasmExpression value;
-} BasmLabel;
+} BasmVariable;
 
 typedef struct BASM_DEFERRED_OPERAND {
   BmInstAddr addr;
-  StringView label;
+  BasmExpression expr;
 } BasmDeferredOperand;
 
 typedef struct BASM {
   BmProgram prg;
-  BasmLabel labels[BASM_LABELS_CAP];
-  size_t labels_len;
+  BasmVariable variables[BASM_VARIABLES_CAP];
+  size_t variables_len;
   BasmDeferredOperand deferred_operands[BASM_DEFERRED_OPERANDS_CAP];
   size_t deferred_operands_len;
 } Basm;
 
-static bool basm_find_label(const Basm *basm, StringView name,
-                            BasmExpression *value) {
-  for (size_t i = 0; i < basm->labels_len; i++) {
-    BasmLabel label = basm->labels[i];
+static bool basm_get_variable_value(const Basm *basm, StringView name,
+                                    BasmExpression *value) {
+  for (size_t i = 0; i < basm->variables_len; i++) {
+    BasmVariable label = basm->variables[i];
     if (sv_eq(label.name, name)) {
       if (value != NULL) {
         *value = label.value;
@@ -49,18 +49,20 @@ static bool basm_find_label(const Basm *basm, StringView name,
   return false;
 }
 
-static void basm_push_value(Basm *basm, StringView name, BasmExpression value) {
-  assert(basm->labels_len < BASM_LABELS_CAP);
-  basm->labels[basm->labels_len++] = (BasmLabel){.name = name, .value = value};
+static void basm_push_variable(Basm *basm, StringView name,
+                               BasmExpression value) {
+  assert(basm->variables_len < BASM_VARIABLES_CAP);
+  basm->variables[basm->variables_len++] =
+      (BasmVariable){.name = name, .value = value};
 }
 
 static void basm_push_deferred_operand(Basm *basm, BmInstAddr addr,
-                                       StringView label) {
+                                       BasmExpression label) {
   assert(basm->deferred_operands_len < BASM_DEFERRED_OPERANDS_CAP);
   basm->deferred_operands[basm->deferred_operands_len++] =
       (BasmDeferredOperand){
           .addr = addr,
-          .label = label,
+          .expr = label,
       };
 }
 
@@ -72,11 +74,8 @@ static BasmExpression basm_fold_expr(Basm *basm, BasmExpression expr) {
     break;
   case BASM_EXPRESSION_KIND_VARIABLE: {
     BasmExpression value;
-    if (basm_find_label(basm, expr.u.variable.lexeme, &value)) {
+    if (basm_get_variable_value(basm, expr.u.variable.lexeme, &value))
       expr = value;
-    } else {
-      basm_push_deferred_operand(basm, basm->prg.len, expr.u.variable.lexeme);
-    }
   } break;
   case BASM_EXPRESSION_KIND_UNARY: {
     BasmExpression operand_value = basm_fold_expr(basm, *expr.u.unary.operand);
@@ -117,39 +116,27 @@ static BasmExpression basm_fold_expr(Basm *basm, BasmExpression expr) {
   return expr;
 }
 
-static BmWord basm_parse_word(Basm *basm, BasmExpression expr, bool force) {
-  (void)basm;
-
+static bool basm_expression_to_word(Basm *basm, BasmExpression expr,
+                                    BmWord *word_out) {
   expr = basm_fold_expr(basm, expr);
-
-  BmWord word = {0};
 
   switch (expr.kind) {
   case BASM_EXPRESSION_KIND_NONE:
-    PANIC("can't resolve none expression");
+    PANIC("can't convert 'none' expression to 'BmWord'");
     break;
   case BASM_EXPRESSION_KIND_INTEGER:
-    word.u64 = expr.u.integer;
-    break;
+    word_out->u64 = expr.u.integer;
+    return true;
   case BASM_EXPRESSION_KIND_FLOAT:
-    word.f64 = expr.u._float;
-    break;
+    word_out->f64 = expr.u._float;
+    return true;
   case BASM_EXPRESSION_KIND_VARIABLE:
   case BASM_EXPRESSION_KIND_UNARY:
-    if (force)
-      PANIC("can't resolve expr");
-    break;
+    return false;
   default:
     BM_UNREACHABLE();
   }
-
-  return word;
 }
-
-#define TRY_MATCH_NO_OPERAND_INST(inst_type)                                   \
-  if (sv_eq(basm_inst.inst_name.lexeme,                                        \
-            sv_from_cstr(bm_inst_type_readable_name(inst_type))))              \
-    inst.type = inst_type;
 
 static bool basm_assemble_file(Basm *basm, const char *input_path,
                                const char *output_path) {
@@ -166,78 +153,49 @@ static bool basm_assemble_file(Basm *basm, const char *input_path,
     BasmInst basm_inst = stmt.u.inst;
 
     if (!sv_is_blank(basm_inst.label.lexeme)) {
-      basm_push_value(basm, basm_inst.label.lexeme,
-                      (BasmExpression){.kind = BASM_EXPRESSION_KIND_INTEGER,
-                                       .u.integer = basm->prg.len});
+      basm_push_variable(basm, basm_inst.label.lexeme,
+                         (BasmExpression){.kind = BASM_EXPRESSION_KIND_INTEGER,
+                                          .u.integer = basm->prg.len});
     }
 
     BmInst inst = {0};
     bool found = false;
+
     for (size_t i = 0; i < BM_NUM_OF_INST_TYPES; i++) {
       BmInstType type = (BmInstType)i;
 
-      if (!bm_inst_type_has_operand(type) &&
-          sv_eq(basm_inst.inst_name.lexeme,
-                sv_from_cstr(bm_inst_type_readable_name(type)))) {
-        inst.type = type;
+      const char *type_name = bm_inst_type_string(type);
+      if (sv_eq(basm_inst.name.lexeme, sv_from_cstr(type_name))) {
         found = true;
-        break;
+
+        inst.type = type;
+        if (bm_inst_type_has_operand(type)) {
+          BmWord operand = {0};
+          if (!basm_expression_to_word(basm, basm_inst.expr, &operand)) {
+            basm_push_deferred_operand(basm, basm->prg.len, basm_inst.expr);
+          }
+
+          inst.operand = operand;
+        } else if (basm_inst.expr.kind != BASM_EXPRESSION_KIND_NONE) {
+          PANIC("'%s' doesn't inst accept an operand.", type_name);
+        }
       }
     }
 
-    if (found) {
-      bm_program_push(&basm->prg, inst);
-      continue;
-    }
-
-    if (sv_eq(sv_from_cstr(bm_inst_type_readable_name(BM_INST_TYPE_PUSH)),
-              basm_inst.inst_name.lexeme)) {
-      inst.type = BM_INST_TYPE_PUSH;
-      inst.operand = basm_parse_word(basm, basm_inst.expr, false);
-    } else if (sv_eq(
-                   sv_from_cstr(bm_inst_type_readable_name(BM_INST_TYPE_JUMP)),
-                   basm_inst.inst_name.lexeme)) {
-      inst.type = BM_INST_TYPE_JUMP;
-      inst.operand = basm_parse_word(basm, basm_inst.expr, false);
-    } else if (sv_eq(sv_from_cstr(
-                         bm_inst_type_readable_name(BM_INST_TYPE_JMP_IF_TRUE)),
-                     basm_inst.inst_name.lexeme)) {
-      inst.type = BM_INST_TYPE_JMP_IF_TRUE;
-      inst.operand = basm_parse_word(basm, basm_inst.expr, false);
-    } else if (sv_eq(
-                   sv_from_cstr(bm_inst_type_readable_name(BM_INST_TYPE_CALL)),
-                   basm_inst.inst_name.lexeme)) {
-      inst.type = BM_INST_TYPE_CALL;
-      inst.operand = basm_parse_word(basm, basm_inst.expr, false);
-    } else if (sv_eq(sv_from_cstr(
-                         bm_inst_type_readable_name(BM_INST_TYPE_DUPLICATE)),
-                     basm_inst.inst_name.lexeme)) {
-      inst.type = BM_INST_TYPE_DUPLICATE;
-      inst.operand = basm_parse_word(basm, basm_inst.expr, false);
-    } else if (sv_eq(
-                   sv_from_cstr(bm_inst_type_readable_name(BM_INST_TYPE_SWAP)),
-                   basm_inst.inst_name.lexeme)) {
-      inst.type = BM_INST_TYPE_SWAP;
-      inst.operand = basm_parse_word(basm, basm_inst.expr, false);
-    } else if (sv_eq(sv_from_cstr(
-                         bm_inst_type_readable_name(BM_INST_TYPE_NATIVE)),
-                     basm_inst.inst_name.lexeme)) {
-      inst.type = BM_INST_TYPE_NATIVE;
-      inst.operand = basm_parse_word(basm, basm_inst.expr, false);
-    } else {
-      PANIC("unknown inst name '" SV_FMT "'",
-            SV_ARG(basm_inst.inst_name.lexeme));
-    }
+    if (!found)
+      PANIC("unknown inst name '" SV_FMT "'", SV_ARG(basm_inst.name.lexeme));
 
     bm_program_push(&basm->prg, inst);
   }
 
   for (size_t i = 0; i < basm->deferred_operands_len; i++) {
-    BasmDeferredOperand jmp = basm->deferred_operands[i];
-    BasmExpression value;
-    if (!basm_find_label(basm, jmp.label, &value))
-      PANIC("failed to resolve '" SV_FMT "'.", SV_ARG(jmp.label));
-    basm->prg.ptr[jmp.addr].operand = basm_parse_word(basm, value, true);
+    BasmDeferredOperand deferred_operand = basm->deferred_operands[i];
+
+    if (!basm_expression_to_word(
+            basm, deferred_operand.expr,
+            &basm->prg.ptr[deferred_operand.addr].operand)) {
+      PANIC("failed to resolve");
+    }
   }
 
   free((void *)source.ptr);
