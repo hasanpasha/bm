@@ -8,6 +8,7 @@
 
 typedef enum BASM_TOKEN_KIND {
   BASM_TOKEN_KIND_IDENTIFIER,
+  BASM_TOKEN_KIND_STRING,
   BASM_TOKEN_KIND_INTEGER,
   BASM_TOKEN_KIND_FLOAT,
   BASM_TOKEN_KIND_COLON,
@@ -21,6 +22,8 @@ static const char *basm_token_kind_string(BasmTokenKind kind) {
   switch (kind) {
   case BASM_TOKEN_KIND_IDENTIFIER:
     return "IDENTIFIER";
+  case BASM_TOKEN_KIND_STRING:
+    return "STRING";
   case BASM_TOKEN_KIND_INTEGER:
     return "INTEGER";
   case BASM_TOKEN_KIND_FLOAT:

@@ -1,0 +1,7 @@
+%bind print_i64 2
+%bind print_u64 3
+%bind print_f64 4
+%bind print_ptr 5
+
+loop_1:
+    ret

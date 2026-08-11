@@ -54,9 +54,14 @@ typedef struct BASM_BIND {
   BasmExpression expr;
 } BasmBind;
 
+typedef struct BASM_INCLUDE {
+  BasmToken path;
+} BasmInclude;
+
 typedef enum BASM_STATEMENT_KIND {
   BASM_STATEMENT_KIND_INSTRUCTION,
   BASM_STATEMENT_KIND_BIND,
+  BASM_STATEMENT_KIND_INCLUDE,
 } BasmStatementKind;
 
 const char *basme_statement_kind_string(BasmStatementKind kind);
@@ -66,6 +71,7 @@ typedef struct BASM_STATEMENT {
   union BASM_STATEMENT_UNION {
     BasmInst inst;
     BasmBind bind;
+    BasmInclude include;
   } u;
 } BasmStatement;
 
@@ -131,6 +137,8 @@ const char *basme_statement_kind_string(BasmStatementKind kind) {
     return "INSTRUCTION";
   case BASM_STATEMENT_KIND_BIND:
     return "BIND";
+  case BASM_STATEMENT_KIND_INCLUDE:
+    return "INCLUDE";
   default:
     BM_UNREACHABLE();
   }
@@ -150,6 +158,9 @@ void basm_statement_dump(BasmStatement stmt, FILE *stream) {
     BasmBind bind = stmt.u.bind;
     fprintf(stream, "name:'" SV_FMT "'), expr:", SV_ARG(bind.name.lexeme));
     basm_expression_dump(&bind.expr, stream);
+  } break;
+  case BASM_STATEMENT_KIND_INCLUDE: {
+    fprintf(stream, "'" SV_FMT "'", SV_ARG(stmt.u.include.path.lexeme));
   } break;
   default:
     BM_UNREACHABLE();

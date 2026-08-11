@@ -5,7 +5,12 @@
 %bind c 2
 %bind d 3
 
+        call loop_1
+
         jmp main
+
+%include "./examples/natives.basm"
+
 main:        
         push count               # counter
         # first two fibonacci numbers
@@ -13,7 +18,7 @@ main:
         push 1.0                # fib_1
 loop:   swap b
         dup a
-        native 4
+        native print_f64
         dup b
         addf
         swap c

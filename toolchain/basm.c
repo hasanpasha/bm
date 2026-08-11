@@ -53,16 +53,16 @@ static void basm_push_variable(Basm *basm, StringView name,
                                BasmExpression value) {
   assert(basm->variables_len < BASM_VARIABLES_CAP);
   basm->variables[basm->variables_len++] =
-      (BasmVariable){.name = name, .value = value};
+      (BasmVariable){.name = sv_dup(name), .value = value};
 }
 
 static void basm_push_deferred_operand(Basm *basm, BmInstAddr addr,
-                                       BasmExpression label) {
+                                       BasmExpression expr) {
   assert(basm->deferred_operands_len < BASM_DEFERRED_OPERANDS_CAP);
   basm->deferred_operands[basm->deferred_operands_len++] =
       (BasmDeferredOperand){
           .addr = addr,
-          .expr = label,
+          .expr = expr,
       };
 }
 
@@ -71,7 +71,6 @@ static BasmExpression basm_fold_expr(Basm *basm, BasmExpression expr) {
   case BASM_EXPRESSION_KIND_NONE:
   case BASM_EXPRESSION_KIND_INTEGER:
   case BASM_EXPRESSION_KIND_FLOAT:
-    break;
   case BASM_EXPRESSION_KIND_VARIABLE: {
     BasmExpression value;
     if (basm_get_variable_value(basm, expr.u.variable.lexeme, &value))
@@ -138,8 +137,25 @@ static bool basm_expression_to_word(Basm *basm, BasmExpression expr,
   }
 }
 
-static bool basm_assemble_file(Basm *basm, const char *input_path,
-                               const char *output_path) {
+static bool basm_assemble_resolve(Basm *basm) {
+  for (size_t i = 0; i < basm->deferred_operands_len; i++) {
+    BasmDeferredOperand deferred_operand = basm->deferred_operands[i];
+
+    if (!basm_expression_to_word(
+            basm, deferred_operand.expr,
+            &basm->prg.ptr[deferred_operand.addr].operand)) {
+      bm_inst_dump(basm->prg.ptr[deferred_operand.addr], stderr);
+      fputc('\n', stderr);
+      basm_expression_dump(&deferred_operand.expr, stderr);
+      fputc('\n', stderr);
+      PANIC("failed to resolve %lu", i);
+    }
+  }
+
+  return true;
+}
+
+static bool basm_assemble_program(Basm *basm, const char *input_path) {
   StringView source = sv_read_file(input_path);
 
   BasmLexer lexer = basm_lexer_init(source);
@@ -151,6 +167,17 @@ static bool basm_assemble_file(Basm *basm, const char *input_path,
       BasmBind bind = stmt.u.bind;
 
       basm_push_variable(basm, bind.name.lexeme, bind.expr);
+
+      continue;
+    }
+
+    if (stmt.kind == BASM_STATEMENT_KIND_INCLUDE) {
+      const char *include_path = sv_alloc_cstr(stmt.u.include.path.lexeme);
+      DEBUG("include '%s'.", include_path);
+
+      if (!basm_assemble_program(basm, include_path)) {
+        PANIC("failed to include file '%s'.", include_path);
+      }
 
       continue;
     }
@@ -196,18 +223,18 @@ static bool basm_assemble_file(Basm *basm, const char *input_path,
     bm_program_push(&basm->prg, inst);
   }
 
-  for (size_t i = 0; i < basm->deferred_operands_len; i++) {
-    BasmDeferredOperand deferred_operand = basm->deferred_operands[i];
+  // TODO: free allocated source buffer
+  // free((void *)source.ptr);
 
-    if (!basm_expression_to_word(
-            basm, deferred_operand.expr,
-            &basm->prg.ptr[deferred_operand.addr].operand)) {
-      PANIC("failed to resolve");
-    }
-  }
+  return true;
+}
 
-  free((void *)source.ptr);
-  return bm_program_save_to_file(&basm->prg, output_path);
+static bool basm_assemble_file(Basm *basm, const char *input_path,
+                               const char *output_path) {
+
+  return basm_assemble_program(basm, input_path) &&
+         basm_assemble_resolve(basm) &&
+         bm_program_save_to_file(&basm->prg, output_path);
 }
 
 Basm basm = {0};

@@ -97,6 +97,7 @@ static BasmExpression unary(BasmParser *parser) {
     break;
   case BASM_TOKEN_KIND_PERCENT:
     PANIC("unimplemented");
+  case BASM_TOKEN_KIND_STRING:
   case BASM_TOKEN_KIND_IDENTIFIER:
   case BASM_TOKEN_KIND_INTEGER:
   case BASM_TOKEN_KIND_FLOAT:
@@ -192,15 +193,15 @@ static bool basm_parser_statement(BasmParser *parser,
   case BASM_TOKEN_KIND_PERCENT: {
     basm_parser_munch(parser, BASM_TOKEN_KIND_PERCENT);
 
-    const BasmToken statement_name =
+    const BasmToken statement_token =
         basm_parser_expect(parser, BASM_TOKEN_KIND_IDENTIFIER);
 
-    if (sv_eq(statement_name.lexeme, sv_from_cstr("bind"))) {
+    const StringView name = statement_token.lexeme;
+    if (sv_eq(name, sv_from_cstr("bind"))) {
       const BasmToken name =
           basm_parser_expect(parser, BASM_TOKEN_KIND_IDENTIFIER);
 
       BasmExpression expr = basm_parser_expression(parser);
-      basm_expression_dump(&expr, stdout);
 
       statement_out->kind = BASM_STATEMENT_KIND_BIND;
       statement_out->u.bind = (BasmBind){.name = name, .expr = expr};
@@ -209,11 +210,18 @@ static bool basm_parser_statement(BasmParser *parser,
         basm_parser_munch(parser, BASM_TOKEN_KIND_NEW_LINE);
 
       return true;
+    } else if (sv_eq(name, sv_from_cstr("include"))) {
+      const BasmToken path_token =
+          basm_parser_expect(parser, BASM_TOKEN_KIND_STRING);
+      statement_out->kind = BASM_STATEMENT_KIND_INCLUDE;
+      statement_out->u.include = (BasmInclude){.path = path_token};
+      return true;
     } else {
-      PANIC("unknown statement '" SV_FMT "'.", SV_ARG(statement_name.lexeme));
+      PANIC("unknown statement '" SV_FMT "'.", SV_ARG(statement_token.lexeme));
     }
 
   } break;
+  case BASM_TOKEN_KIND_STRING:
   case BASM_TOKEN_KIND_INTEGER:
   case BASM_TOKEN_KIND_FLOAT:
   case BASM_TOKEN_KIND_COLON:
