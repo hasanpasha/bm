@@ -1,6 +1,6 @@
 .vscode/
 **/*.bm
 **/*.vsix
-**/basm
-**/bme
-**/debasm
+build/toolchain/basm
+build/toolchain/bme
+build/toolchain/debasm
