@@ -89,6 +89,8 @@ static BasmToken basm_lexer_next_token(BasmLexer *lexer) {
     return basm_lexer_advance_with_token(lexer, BASM_TOKEN_KIND_COLON);
   case '-':
     return basm_lexer_advance_with_token(lexer, BASM_TOKEN_KIND_MINUS);
+  case '%':
+    return basm_lexer_advance_with_token(lexer, BASM_TOKEN_KIND_PERCENT);
   case '\n':
     return basm_lexer_advance_with_token(lexer, BASM_TOKEN_KIND_NEW_LINE);
   default:

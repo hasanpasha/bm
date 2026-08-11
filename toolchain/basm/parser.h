@@ -95,6 +95,8 @@ static BasmExpression unary(BasmParser *parser) {
   case BASM_TOKEN_KIND_MINUS:
     operator= BASM_EXPRESSION_UNARY_OPERATOR_MINUS;
     break;
+  case BASM_TOKEN_KIND_PERCENT:
+    PANIC("unimplemented");
   case BASM_TOKEN_KIND_IDENTIFIER:
   case BASM_TOKEN_KIND_INTEGER:
   case BASM_TOKEN_KIND_FLOAT:
@@ -187,10 +189,36 @@ static bool basm_parser_statement(BasmParser *parser,
   } break;
   case BASM_TOKEN_KIND_END_OF_INPUT:
     return false;
+  case BASM_TOKEN_KIND_PERCENT: {
+    basm_parser_munch(parser, BASM_TOKEN_KIND_PERCENT);
+
+    const BasmToken statement_name =
+        basm_parser_expect(parser, BASM_TOKEN_KIND_IDENTIFIER);
+
+    if (sv_eq(statement_name.lexeme, sv_from_cstr("bind"))) {
+      const BasmToken name =
+          basm_parser_expect(parser, BASM_TOKEN_KIND_IDENTIFIER);
+
+      BasmExpression expr = basm_parser_expression(parser);
+      basm_expression_dump(&expr, stdout);
+
+      statement_out->kind = BASM_STATEMENT_KIND_BIND;
+      statement_out->u.bind = (BasmBind){.name = name, .expr = expr};
+
+      if (parser->current.kind != BASM_TOKEN_KIND_END_OF_INPUT)
+        basm_parser_munch(parser, BASM_TOKEN_KIND_NEW_LINE);
+
+      return true;
+    } else {
+      PANIC("unknown statement '" SV_FMT "'.", SV_ARG(statement_name.lexeme));
+    }
+
+  } break;
   case BASM_TOKEN_KIND_INTEGER:
   case BASM_TOKEN_KIND_FLOAT:
   case BASM_TOKEN_KIND_COLON:
   case BASM_TOKEN_KIND_MINUS:
+
   case BASM_TOKEN_KIND_NEW_LINE:
     while (parser->current.kind == BASM_TOKEN_KIND_NEW_LINE)
       (void)basm_parser_advance(parser);

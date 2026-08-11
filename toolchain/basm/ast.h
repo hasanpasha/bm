@@ -49,8 +49,14 @@ typedef struct BASM_INST {
   BasmExpression expr;
 } BasmInst;
 
+typedef struct BASM_BIND {
+  BasmToken name;
+  BasmExpression expr;
+} BasmBind;
+
 typedef enum BASM_STATEMENT_KIND {
   BASM_STATEMENT_KIND_INSTRUCTION,
+  BASM_STATEMENT_KIND_BIND,
 } BasmStatementKind;
 
 const char *basme_statement_kind_string(BasmStatementKind kind);
@@ -59,6 +65,7 @@ typedef struct BASM_STATEMENT {
   BasmStatementKind kind;
   union BASM_STATEMENT_UNION {
     BasmInst inst;
+    BasmBind bind;
   } u;
 } BasmStatement;
 
@@ -122,6 +129,8 @@ const char *basme_statement_kind_string(BasmStatementKind kind) {
   switch (kind) {
   case BASM_STATEMENT_KIND_INSTRUCTION:
     return "INSTRUCTION";
+  case BASM_STATEMENT_KIND_BIND:
+    return "BIND";
   default:
     BM_UNREACHABLE();
   }
@@ -136,6 +145,11 @@ void basm_statement_dump(BasmStatement stmt, FILE *stream) {
             basm_token_kind_string(inst.label.kind), SV_ARG(inst.label.lexeme),
             basm_token_kind_string(inst.label.kind), SV_ARG(inst.name.lexeme));
     basm_expression_dump(&inst.expr, stream);
+  } break;
+  case BASM_STATEMENT_KIND_BIND: {
+    BasmBind bind = stmt.u.bind;
+    fprintf(stream, "name:'" SV_FMT "'), expr:", SV_ARG(bind.name.lexeme));
+    basm_expression_dump(&bind.expr, stream);
   } break;
   default:
     BM_UNREACHABLE();

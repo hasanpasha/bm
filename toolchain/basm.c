@@ -147,6 +147,14 @@ static bool basm_assemble_file(Basm *basm, const char *input_path,
 
   BasmStatement stmt;
   while (basm_parser_statement(&parser, &stmt)) {
+    if (stmt.kind == BASM_STATEMENT_KIND_BIND) {
+      BasmBind bind = stmt.u.bind;
+
+      basm_push_variable(basm, bind.name.lexeme, bind.expr);
+
+      continue;
+    }
+
     if (stmt.kind != BASM_STATEMENT_KIND_INSTRUCTION)
       PANIC("only instruction statement are supported at the moment");
 

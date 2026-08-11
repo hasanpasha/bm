@@ -12,6 +12,7 @@ typedef enum BASM_TOKEN_KIND {
   BASM_TOKEN_KIND_FLOAT,
   BASM_TOKEN_KIND_COLON,
   BASM_TOKEN_KIND_MINUS,
+  BASM_TOKEN_KIND_PERCENT,
   BASM_TOKEN_KIND_NEW_LINE,
   BASM_TOKEN_KIND_END_OF_INPUT,
 } BasmTokenKind;
@@ -28,6 +29,8 @@ static const char *basm_token_kind_string(BasmTokenKind kind) {
     return "COLON";
   case BASM_TOKEN_KIND_MINUS:
     return "MINUS";
+  case BASM_TOKEN_KIND_PERCENT:
+    return "PERCENT";
   case BASM_TOKEN_KIND_NEW_LINE:
     return "NEW_LINE";
   case BASM_TOKEN_KIND_END_OF_INPUT:
