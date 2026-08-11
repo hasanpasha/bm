@@ -167,52 +167,36 @@ double sv_parse_double(StringView sv) {
 
 StringView sv_read_file(const char *file_path) {
   FILE *f = fopen(file_path, "rb");
-  if (f == NULL) {
-    fprintf(stderr, "Error: could not open file '%s': %s\n", file_path,
-            strerror(errno));
-    exit(EXIT_FAILURE);
-  }
+  if (f == NULL)
+    PANIC("could not open file '%s': %s", file_path, strerror(errno));
 
   if (fseek(f, 0, SEEK_END) < 0) {
-    fprintf(stderr, "Error: could not seek to the end of file '%s': %s.\n",
-            file_path, strerror(errno));
-    exit(EXIT_FAILURE);
+    PANIC("could not seek to the end of file '%s': %s.", file_path,
+          strerror(errno));
   }
 
   long pos = ftell(f);
-  if (pos < 0) {
-    fprintf(stderr, "Error: could get size of file '%s': %s.\n", file_path,
-            strerror(errno));
-    exit(EXIT_FAILURE);
-  }
+  if (pos < 0)
+    PANIC("could get size of file '%s': %s.", file_path, strerror(errno));
 
   size_t file_size = (size_t)pos;
 
-  if (fseek(f, 0, SEEK_SET) < 0) {
-    fprintf(stderr,
-            "Error: could not seek to the beginning of file '%s': %s.\n",
-            file_path, strerror(errno));
-    exit(EXIT_FAILURE);
-  }
+  if (fseek(f, 0, SEEK_SET) < 0)
+    PANIC("could not seek to the beginning of file '%s': %s.", file_path,
+          strerror(errno));
 
   char *buffer = (char *)malloc(file_size);
-  if (buffer == NULL) {
-    fprintf(stderr,
-            "Error: failed to allocate enough memory to read file: '%s'.\n",
-            file_path);
-    exit(EXIT_FAILURE);
-  }
+  if (buffer == NULL)
+    PANIC("failed to allocate enough memory to read file: '%s'.", file_path);
 
   size_t read_items = fread(buffer, sizeof(char), file_size, f);
   if (read_items < file_size) {
-    fprintf(stderr, "Error: could not read the entire file '%s' of size %ld.\n",
-            file_path, file_size);
-    exit(EXIT_FAILURE);
+    PANIC("could not read the entire file '%s' of size %ld.", file_path,
+          file_size);
   }
 
   if (ferror(f)) {
-    fprintf(stderr, "Error: could not read from file '%s': %s.\n", file_path,
-            strerror(errno));
+    PANIC("could not read from file '%s': %s.", file_path, strerror(errno));
     exit(EXIT_FAILURE);
   }
 

@@ -1,10 +1,10 @@
         jmp main
-main:
         # 1477 is the maximum iteration number that its fib is not infinity
+main:        
         push 1477               # counter
         # first two fibonacci numbers
-        push 0f64               # fib_2
-        push 1f64               # fib_1
+        push 0.0                # fib_2
+        push 1.0                # fib_1
 loop:   swap 1
         dup 0
         native 4

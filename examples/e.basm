@@ -1,16 +1,16 @@
 # sum (1/n!)
 # 1/1 + 1/1 + 1(1 * 2) + 1(1 * 2 * 3) + ...
-    push 1.0f64     # n
-    push 1.0f64     # n!
-    push 1.0f64     # sum
+    push 1.0     # n
+    push 1.0     # n!
+    push 1.0     # sum
 loop:
-    push 1.0f64
+    push 1.0
     dup 2
     divf
     addf 
 
     swap 2
-    push 1.0f64
+    push 1.0
     addf
     dup 0
     swap 2
@@ -19,7 +19,7 @@ loop:
     swap 1
     swap 2
 
-    push 69f64
+    push 69
     dup 3
     gef
 

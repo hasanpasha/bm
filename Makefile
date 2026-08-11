@@ -1,7 +1,7 @@
 CFLAGS := -std=c11 -Wall -Wextra -Wswitch-enum -Wmissing-prototypes -pedantic -Isrc
 
 ifndef BUILD_DIR
-BUILD_DIR := .
+BUILD_DIR := build
 endif
 
 TOOLCHAIN := $(patsubst toolchain/%.c,$(BUILD_DIR)/toolchain/%,$(wildcard toolchain/*.c))

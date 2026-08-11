@@ -17,9 +17,9 @@ lerpf:
     ret
 
 main:
-    push 69f64
-    push 420f64
-    push 1f64
+    push 69.0
+    push 420.0
+    push 1.0
 
 loop:
 
@@ -29,15 +29,15 @@ loop:
     call lerpf
     native 4
     
-    push 0f64
+    push 0.0
     dup 1
     gef
     jmt end
 
-    push 0.01f64
+    push 0.01
     subf
     
     jmp loop
 
-end:
+end: 
     hlt
