@@ -11,7 +11,7 @@
 #include "basm/ast.h"
 #include "basm/lexer.h"
 #include "basm/parser.h"
-#include "basm/token.h" fprint
+#include "basm/token.h"
 
 #define BASM_LABELS_CAP 1024
 #define BASM_DEFERRED_OPERANDS_CAP 1024
