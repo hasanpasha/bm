@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define BM_IMPLEMENTATION
 #include <bm.h>
 
 BmProgram prg = {0};

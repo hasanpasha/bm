@@ -7,9 +7,12 @@
 #include "lexer.h"
 #include "token.h"
 
+#include <arena.h>
+
 typedef struct BASM_PARSER {
   BasmToken current, next;
   BasmLexer lexer;
+  Arena *arena;
 } BasmParser;
 
 static BasmToken basm_parser_advance(BasmParser *parser) {
@@ -19,8 +22,8 @@ static BasmToken basm_parser_advance(BasmParser *parser) {
   return tok;
 }
 
-static BasmParser basm_parser_init(BasmLexer lexer) {
-  BasmParser parser = {.lexer = lexer};
+static BasmParser basm_parser_init(Arena *arena, BasmLexer lexer) {
+  BasmParser parser = {.lexer = lexer, .arena = arena};
   (void)basm_parser_advance(&parser);
   (void)basm_parser_advance(&parser);
   return parser;
@@ -79,8 +82,8 @@ static BasmExpression _float(BasmParser *parser) {
                           .u = {._float = num}};
 }
 
-static BasmExpression *alloc_expr(BasmExpression expr) {
-  BasmExpression *p = (BasmExpression *)malloc(sizeof(BasmExpression));
+static BasmExpression *alloc_expr(BasmParser *parser, BasmExpression expr) {
+  BasmExpression *p = arena_new(parser->arena, BasmExpression);
   if (p == NULL)
     PANIC("failed to allocate an expression");
 
@@ -114,7 +117,8 @@ static BasmExpression unary(BasmParser *parser) {
 
   return (BasmExpression){
       .kind = BASM_EXPRESSION_KIND_UNARY,
-      .u = {.unary = {.operator= operator, .operand = alloc_expr(operand)}}};
+      .u = {.unary = {.operator= operator,
+                      .operand = alloc_expr(parser, operand)}}};
 }
 
 static BasmExpression none_expr(BasmParser *parser) {
@@ -151,7 +155,7 @@ static BasmExpression parse_precedence(BasmParser *parser,
     if (infix == NULL)
       break;
 
-    lhs = infix(parser, alloc_expr(lhs));
+    lhs = infix(parser, alloc_expr(parser, lhs));
   }
 
   return lhs;

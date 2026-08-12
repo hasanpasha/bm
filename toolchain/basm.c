@@ -2,10 +2,8 @@
 #include <ctype.h>
 #include <stdlib.h>
 
-#define BM_IMPLEMENTATION
+#include <arena.h>
 #include <bm.h>
-
-#define STRING_VIEW_IMPLEMENTATION
 #include <string_view.h>
 
 #include "basm/ast.h"
@@ -27,6 +25,7 @@ typedef struct BASM_DEFERRED_OPERAND {
 } BasmDeferredOperand;
 
 typedef struct BASM {
+  Arena arena;
   BmProgram prg;
   BasmVariable variables[BASM_VARIABLES_CAP];
   size_t variables_len;
@@ -53,7 +52,7 @@ static void basm_push_variable(Basm *basm, StringView name,
                                BasmExpression value) {
   assert(basm->variables_len < BASM_VARIABLES_CAP);
   basm->variables[basm->variables_len++] =
-      (BasmVariable){.name = sv_dup(name), .value = value};
+      (BasmVariable){.name = name, .value = value};
 }
 
 static void basm_push_deferred_operand(Basm *basm, BmInstAddr addr,
@@ -156,10 +155,10 @@ static bool basm_assemble_resolve(Basm *basm) {
 }
 
 static bool basm_assemble_program(Basm *basm, const char *input_path) {
-  StringView source = sv_read_file(input_path);
+  StringView source = sv_read_file(&basm->arena, input_path);
 
   BasmLexer lexer = basm_lexer_init(source);
-  BasmParser parser = basm_parser_init(lexer);
+  BasmParser parser = basm_parser_init(&basm->arena, lexer);
 
   BasmStatement stmt;
   while (basm_parser_statement(&parser, &stmt)) {
@@ -172,12 +171,12 @@ static bool basm_assemble_program(Basm *basm, const char *input_path) {
     }
 
     if (stmt.kind == BASM_STATEMENT_KIND_INCLUDE) {
-      const char *include_path = sv_alloc_cstr(stmt.u.include.path.lexeme);
-      DEBUG("include '%s'.", include_path);
+      char *include_path = sv_alloc_cstr(stmt.u.include.path.lexeme);
 
-      if (!basm_assemble_program(basm, include_path)) {
+      if (!basm_assemble_program(basm, include_path))
         PANIC("failed to include file '%s'.", include_path);
-      }
+
+      free(include_path);
 
       continue;
     }
@@ -223,9 +222,6 @@ static bool basm_assemble_program(Basm *basm, const char *input_path) {
     bm_program_push(&basm->prg, inst);
   }
 
-  // TODO: free allocated source buffer
-  // free((void *)source.ptr);
-
   return true;
 }
 
@@ -267,8 +263,13 @@ int main(int argc, char *argv[]) {
     PANIC("expected output");
   }
 
+  if (!arena_init(&basm.arena, 16 * 1024 * 1024))
+    PANIC("failed to initialize arena.");
+
   if (!basm_assemble_file(&basm, input_file, output_file))
     PANIC("failed to assemble '%s'", input_file);
+
+  arena_deinit(&basm.arena);
 
   return EXIT_SUCCESS;
 }

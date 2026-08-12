@@ -2,10 +2,12 @@
 #define BM_H
 
 #include <assert.h>
+#include <errno.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
 #if defined(__GNUC__) || defined(__clang__)
 #define BM_UNREACHABLE() __builtin_unreachable()
@@ -178,13 +180,6 @@ BmError bm_execute_inst(Bm *bm, BmInst inst);
 BmError bm_step(Bm *bm);
 
 BmError bm_execute_program(Bm *bm, int limit);
-
-#ifdef BM_IMPLEMENTATION
-
-#include <assert.h>
-#include <errno.h>
-#include <stdio.h>
-#include <string.h>
 
 const char *bm_error_string(BmError error) {
   switch (error) {
@@ -630,5 +625,3 @@ BmError bm_execute_program(Bm *bm, int limit) {
 }
 
 #endif // BM_IMPLEMENTATION
-
-#endif // BM_H
