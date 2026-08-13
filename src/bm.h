@@ -102,6 +102,8 @@ typedef enum BM_INST_TYPE {
 
 const char *bm_inst_type_string(BmInstType inst_type);
 
+bool bm_inst_type_from_string(const char *name, BmInstType *inst_type);
+
 bool bm_inst_type_has_operand(BmInstType inst_type);
 
 typedef struct BM_INST {
@@ -258,6 +260,19 @@ const char *bm_inst_type_string(BmInstType inst_type) {
   default:
     BM_UNREACHABLE();
   }
+}
+
+bool bm_inst_type_from_string(const char *name, BmInstType *inst_type) {
+  for (int i = 0; i < BM_NUM_OF_INST_TYPES; i++) {
+    BmInstType type = (BmInstType)i;
+    const char *type_name = bm_inst_type_string(type);
+    if (strncmp(type_name, name, strlen(type_name)) == 0) {
+      if (inst_type != NULL)
+        *inst_type = type;
+      return true;
+    }
+  }
+  return false;
 }
 
 bool bm_inst_type_has_operand(BmInstType inst_type) {
