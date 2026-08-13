@@ -162,64 +162,55 @@ static bool basm_assemble_program(Basm *basm, const char *input_path) {
 
   BasmStatement stmt;
   while (basm_parser_statement(&parser, &stmt)) {
-    if (stmt.kind == BASM_STATEMENT_KIND_BIND) {
+    switch (stmt.kind) {
+    case BASM_STATEMENT_KIND_INSTRUCTION: {
+      BasmInst basm_inst = stmt.u.inst;
+
+      if (!sv_is_blank(basm_inst.label.lexeme)) {
+        basm_push_variable(
+            basm, basm_inst.label.lexeme,
+            (BasmExpression){.kind = BASM_EXPRESSION_KIND_INTEGER,
+                             .u.integer = basm->prg.len});
+      }
+
+      BmInst inst = {0};
+
+      if (!bm_inst_type_from_string(basm_inst.name.lexeme.ptr, &inst.type)) {
+        PANIC("unknown inst name '" SV_FMT "'", SV_ARG(basm_inst.name.lexeme));
+      }
+
+      if (bm_inst_type_has_operand(inst.type)) {
+        BmWord operand = {0};
+        if (!basm_expression_to_word(basm, basm_inst.expr, &operand)) {
+          basm_push_deferred_operand(basm, basm->prg.len, basm_inst.expr);
+        }
+        inst.operand = operand;
+      } else if (basm_inst.expr.kind != BASM_EXPRESSION_KIND_NONE) {
+        PANIC("'%s' doesn't inst accept an operand.",
+              bm_inst_type_string(inst.type));
+      }
+
+      bm_program_push(&basm->prg, inst);
+    } break;
+    case BASM_STATEMENT_KIND_BIND: {
       BasmBind bind = stmt.u.bind;
 
       basm_push_variable(basm, bind.name.lexeme, bind.expr);
+    } break;
+    case BASM_STATEMENT_KIND_INCLUDE: {
+      size_t mark = arena_save(&basm->arena);
 
-      continue;
-    }
-
-    if (stmt.kind == BASM_STATEMENT_KIND_INCLUDE) {
-      char *include_path = sv_alloc_cstr(stmt.u.include.path.lexeme);
+      char *include_path =
+          sv_alloc_cstr(&basm->arena, stmt.u.include.path.lexeme);
 
       if (!basm_assemble_program(basm, include_path))
         PANIC("failed to include file '%s'.", include_path);
 
-      free(include_path);
-
-      continue;
+      arena_restore(&basm->arena, mark);
+    } break;
+    default:
+      BM_UNREACHABLE();
     }
-
-    if (stmt.kind != BASM_STATEMENT_KIND_INSTRUCTION)
-      PANIC("only instruction statement are supported at the moment");
-
-    BasmInst basm_inst = stmt.u.inst;
-
-    if (!sv_is_blank(basm_inst.label.lexeme)) {
-      basm_push_variable(basm, basm_inst.label.lexeme,
-                         (BasmExpression){.kind = BASM_EXPRESSION_KIND_INTEGER,
-                                          .u.integer = basm->prg.len});
-    }
-
-    BmInst inst = {0};
-    bool found = false;
-
-    for (size_t i = 0; i < BM_NUM_OF_INST_TYPES; i++) {
-      BmInstType type = (BmInstType)i;
-
-      const char *type_name = bm_inst_type_string(type);
-      if (sv_eq(basm_inst.name.lexeme, sv_from_cstr(type_name))) {
-        found = true;
-
-        inst.type = type;
-        if (bm_inst_type_has_operand(type)) {
-          BmWord operand = {0};
-          if (!basm_expression_to_word(basm, basm_inst.expr, &operand)) {
-            basm_push_deferred_operand(basm, basm->prg.len, basm_inst.expr);
-          }
-
-          inst.operand = operand;
-        } else if (basm_inst.expr.kind != BASM_EXPRESSION_KIND_NONE) {
-          PANIC("'%s' doesn't inst accept an operand.", type_name);
-        }
-      }
-    }
-
-    if (!found)
-      PANIC("unknown inst name '" SV_FMT "'", SV_ARG(basm_inst.name.lexeme));
-
-    bm_program_push(&basm->prg, inst);
   }
 
   return true;
