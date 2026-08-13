@@ -22,9 +22,9 @@ typedef struct STRING_VIEW {
 
 StringView sv_from_cstr(const char *str);
 
-StringView sv_dup(StringView sv);
+StringView sv_dup(Arena *arena, StringView sv);
 
-char *sv_alloc_cstr(StringView sv);
+char *sv_alloc_cstr(Arena *arena, StringView sv);
 
 const char *sv_to_cstr(StringView sv, char *buffer, size_t cap);
 
@@ -135,14 +135,14 @@ bool sv_chop_right(StringView *sv, StringView slice) {
 #define BUFFER_CAP 1024
 static char buffer[BUFFER_CAP];
 
-StringView sv_dup(StringView sv) {
-  sv.ptr = sv_alloc_cstr(sv);
+StringView sv_dup(Arena *arena, StringView sv) {
+  sv.ptr = sv_alloc_cstr(arena, sv);
   // printf("'" SV_FMT "'\n", SV_ARG(sv));
   return sv;
 }
 
-char *sv_alloc_cstr(StringView sv) {
-  char *buffer = (char *)malloc(sv.len + 1);
+char *sv_alloc_cstr(Arena *arena, StringView sv) {
+  char *buffer = arena_new_array(arena, char, sv.len + 1);
   if (buffer == NULL)
     return NULL;
 
