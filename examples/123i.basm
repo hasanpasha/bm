@@ -1,8 +1,7 @@
-push $
-push $
-push $
+push 1
+push 2
+push 3
 addi
 addi
-native 2 # print i64
-#hlt
-jmp $
+dump
+hlt

@@ -1,6 +1,5 @@
 .vscode/
 **/*.bm
 **/*.vsix
-build/toolchain/basm
-build/toolchain/bme
-build/toolchain/debasm
+.zig-cache
+zig-out
