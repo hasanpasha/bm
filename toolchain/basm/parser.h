@@ -7,9 +7,12 @@
 #include "lexer.h"
 #include "token.h"
 
+#include <arena.h>
+
 typedef struct BASM_PARSER {
   BasmToken current, next;
   BasmLexer lexer;
+  Arena *arena;
 } BasmParser;
 
 static BasmToken basm_parser_advance(BasmParser *parser) {
@@ -19,8 +22,8 @@ static BasmToken basm_parser_advance(BasmParser *parser) {
   return tok;
 }
 
-static BasmParser basm_parser_init(BasmLexer lexer) {
-  BasmParser parser = {.lexer = lexer};
+static BasmParser basm_parser_init(Arena *arena, BasmLexer lexer) {
+  BasmParser parser = {.lexer = lexer, .arena = arena};
   (void)basm_parser_advance(&parser);
   (void)basm_parser_advance(&parser);
   return parser;
@@ -79,8 +82,8 @@ static BasmExpression _float(BasmParser *parser) {
                           .u = {._float = num}};
 }
 
-static BasmExpression *alloc_expr(BasmExpression expr) {
-  BasmExpression *p = (BasmExpression *)malloc(sizeof(BasmExpression));
+static BasmExpression *alloc_expr(BasmParser *parser, BasmExpression expr) {
+  BasmExpression *p = arena_new(parser->arena, BasmExpression);
   if (p == NULL)
     PANIC("failed to allocate an expression");
 
@@ -95,10 +98,14 @@ static BasmExpression unary(BasmParser *parser) {
   case BASM_TOKEN_KIND_MINUS:
     operator= BASM_EXPRESSION_UNARY_OPERATOR_MINUS;
     break;
+  case BASM_TOKEN_KIND_PERCENT:
+    PANIC("unimplemented");
+  case BASM_TOKEN_KIND_STRING:
   case BASM_TOKEN_KIND_IDENTIFIER:
   case BASM_TOKEN_KIND_INTEGER:
   case BASM_TOKEN_KIND_FLOAT:
   case BASM_TOKEN_KIND_COLON:
+  case BASM_TOKEN_KIND_DOLLAR:
   case BASM_TOKEN_KIND_NEW_LINE:
   case BASM_TOKEN_KIND_END_OF_INPUT:
     PANIC("unexpected unary operator");
@@ -111,7 +118,13 @@ static BasmExpression unary(BasmParser *parser) {
 
   return (BasmExpression){
       .kind = BASM_EXPRESSION_KIND_UNARY,
-      .u = {.unary = {.operator= operator, .operand = alloc_expr(operand)}}};
+      .u = {.unary = {.operator= operator,
+                      .operand = alloc_expr(parser, operand)}}};
+}
+
+static BasmExpression pc(BasmParser *parser) {
+  basm_parser_munch(parser, BASM_TOKEN_KIND_DOLLAR);
+  return (BasmExpression){.kind = BASM_EXPRESSION_KIND_PC};
 }
 
 static BasmExpression none_expr(BasmParser *parser) {
@@ -126,6 +139,7 @@ static const BasmPareseExprRule rules[] = {
     [BASM_TOKEN_KIND_FLOAT] = {_float, NULL, BASM_PARSE_PRECEDENCE_NONE},
     [BASM_TOKEN_KIND_COLON] = {NULL, NULL, BASM_PARSE_PRECEDENCE_NONE},
     [BASM_TOKEN_KIND_MINUS] = {unary, NULL, BASM_PARSE_PRECEDENCE_UNARY},
+    [BASM_TOKEN_KIND_DOLLAR] = {pc, NULL, BASM_PARSE_PRECEDENCE_NONE},
     [BASM_TOKEN_KIND_NEW_LINE] = {none_expr, NULL, BASM_PARSE_PRECEDENCE_NONE},
     [BASM_TOKEN_KIND_END_OF_INPUT] = {none_expr, NULL, BASM_PARSE_PRECEDENCE_NONE},
 };
@@ -148,7 +162,7 @@ static BasmExpression parse_precedence(BasmParser *parser,
     if (infix == NULL)
       break;
 
-    lhs = infix(parser, alloc_expr(lhs));
+    lhs = infix(parser, alloc_expr(parser, lhs));
   }
 
   return lhs;
@@ -187,10 +201,45 @@ static bool basm_parser_statement(BasmParser *parser,
   } break;
   case BASM_TOKEN_KIND_END_OF_INPUT:
     return false;
+  case BASM_TOKEN_KIND_PERCENT: {
+    basm_parser_munch(parser, BASM_TOKEN_KIND_PERCENT);
+
+    const BasmToken statement_token =
+        basm_parser_expect(parser, BASM_TOKEN_KIND_IDENTIFIER);
+
+    const StringView name = statement_token.lexeme;
+    if (sv_eq(name, sv_from_cstr("bind"))) {
+      const BasmToken name =
+          basm_parser_expect(parser, BASM_TOKEN_KIND_IDENTIFIER);
+
+      BasmExpression expr = basm_parser_expression(parser);
+
+      statement_out->kind = BASM_STATEMENT_KIND_BIND;
+      statement_out->u.bind = (BasmBind){.name = name, .expr = expr};
+
+      if (parser->current.kind != BASM_TOKEN_KIND_END_OF_INPUT)
+        basm_parser_munch(parser, BASM_TOKEN_KIND_NEW_LINE);
+
+      return true;
+    } else if (sv_eq(name, sv_from_cstr("include"))) {
+      const BasmToken path_token =
+          basm_parser_expect(parser, BASM_TOKEN_KIND_STRING);
+      statement_out->kind = BASM_STATEMENT_KIND_INCLUDE;
+      statement_out->u.include = (BasmInclude){.path = path_token};
+      return true;
+    } else {
+      PANIC("unknown statement '" SV_FMT "'.", SV_ARG(statement_token.lexeme));
+    }
+
+  } break;
+  case BASM_TOKEN_KIND_STRING:
   case BASM_TOKEN_KIND_INTEGER:
   case BASM_TOKEN_KIND_FLOAT:
   case BASM_TOKEN_KIND_COLON:
   case BASM_TOKEN_KIND_MINUS:
+  case BASM_TOKEN_KIND_DOLLAR:
+    PANIC("can't start a statement with this token %s.",
+          basm_token_kind_string(parser->current.kind));
   case BASM_TOKEN_KIND_NEW_LINE:
     while (parser->current.kind == BASM_TOKEN_KIND_NEW_LINE)
       (void)basm_parser_advance(parser);

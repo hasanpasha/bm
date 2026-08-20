@@ -1,20 +1,31 @@
+# 1477 is the maximum iteration number that its fib is not infinity
+%bind count 1477
+%bind a 0
+%bind b 1
+%bind c 2
+%bind d 3
+
+        call loop_1
+
         jmp main
-        # 1477 is the maximum iteration number that its fib is not infinity
+
+%include "./examples/natives.basm"
+
 main:        
-        push 1477               # counter
+        push count               # counter
         # first two fibonacci numbers
         push 0.0                # fib_2
         push 1.0                # fib_1
-loop:   swap 1
-        dup 0
-        native 4
-        dup 1
+loop:   swap b
+        dup a
+        native print_f64
+        dup b
         addf
-        swap 2
-        push 1
+        swap c
+        push b
         subi
-        dup 0
-        swap 3
-        swap 1
+        dup a
+        swap d
+        swap b
         jmt loop
         hlt

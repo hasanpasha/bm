@@ -2,10 +2,8 @@
 #include <ctype.h>
 #include <stdlib.h>
 
-#define BM_IMPLEMENTATION
+#include <arena.h>
 #include <bm.h>
-
-#define STRING_VIEW_IMPLEMENTATION
 #include <string_view.h>
 
 #include "basm/ast.h"
@@ -27,6 +25,7 @@ typedef struct BASM_DEFERRED_OPERAND {
 } BasmDeferredOperand;
 
 typedef struct BASM {
+  Arena arena;
   BmProgram prg;
   BasmVariable variables[BASM_VARIABLES_CAP];
   size_t variables_len;
@@ -57,12 +56,12 @@ static void basm_push_variable(Basm *basm, StringView name,
 }
 
 static void basm_push_deferred_operand(Basm *basm, BmInstAddr addr,
-                                       BasmExpression label) {
+                                       BasmExpression expr) {
   assert(basm->deferred_operands_len < BASM_DEFERRED_OPERANDS_CAP);
   basm->deferred_operands[basm->deferred_operands_len++] =
       (BasmDeferredOperand){
           .addr = addr,
-          .expr = label,
+          .expr = expr,
       };
 }
 
@@ -71,7 +70,6 @@ static BasmExpression basm_fold_expr(Basm *basm, BasmExpression expr) {
   case BASM_EXPRESSION_KIND_NONE:
   case BASM_EXPRESSION_KIND_INTEGER:
   case BASM_EXPRESSION_KIND_FLOAT:
-    break;
   case BASM_EXPRESSION_KIND_VARIABLE: {
     BasmExpression value;
     if (basm_get_variable_value(basm, expr.u.variable.lexeme, &value))
@@ -105,9 +103,16 @@ static BasmExpression basm_fold_expr(Basm *basm, BasmExpression expr) {
     case BASM_EXPRESSION_KIND_UNARY:
       *expr.u.unary.operand = operand_value;
       break;
+    case BASM_EXPRESSION_KIND_PC:
+      PANIC("pc expression should have been resolved before reaching this "
+            "point.");
     default:
       BM_UNREACHABLE();
     }
+  } break;
+  case BASM_EXPRESSION_KIND_PC: {
+    expr.kind = BASM_EXPRESSION_KIND_INTEGER;
+    expr.u.integer = basm->prg.len;
   } break;
   default:
     break;
@@ -132,74 +137,99 @@ static bool basm_expression_to_word(Basm *basm, BasmExpression expr,
     return true;
   case BASM_EXPRESSION_KIND_VARIABLE:
   case BASM_EXPRESSION_KIND_UNARY:
+  case BASM_EXPRESSION_KIND_PC:
     return false;
   default:
     BM_UNREACHABLE();
   }
 }
 
-static bool basm_assemble_file(Basm *basm, const char *input_path,
-                               const char *output_path) {
-  StringView source = sv_read_file(input_path);
-
-  BasmLexer lexer = basm_lexer_init(source);
-  BasmParser parser = basm_parser_init(lexer);
-
-  BasmStatement stmt;
-  while (basm_parser_statement(&parser, &stmt)) {
-    if (stmt.kind != BASM_STATEMENT_KIND_INSTRUCTION)
-      PANIC("only instruction statement are supported at the moment");
-
-    BasmInst basm_inst = stmt.u.inst;
-
-    if (!sv_is_blank(basm_inst.label.lexeme)) {
-      basm_push_variable(basm, basm_inst.label.lexeme,
-                         (BasmExpression){.kind = BASM_EXPRESSION_KIND_INTEGER,
-                                          .u.integer = basm->prg.len});
-    }
-
-    BmInst inst = {0};
-    bool found = false;
-
-    for (size_t i = 0; i < BM_NUM_OF_INST_TYPES; i++) {
-      BmInstType type = (BmInstType)i;
-
-      const char *type_name = bm_inst_type_string(type);
-      if (sv_eq(basm_inst.name.lexeme, sv_from_cstr(type_name))) {
-        found = true;
-
-        inst.type = type;
-        if (bm_inst_type_has_operand(type)) {
-          BmWord operand = {0};
-          if (!basm_expression_to_word(basm, basm_inst.expr, &operand)) {
-            basm_push_deferred_operand(basm, basm->prg.len, basm_inst.expr);
-          }
-
-          inst.operand = operand;
-        } else if (basm_inst.expr.kind != BASM_EXPRESSION_KIND_NONE) {
-          PANIC("'%s' doesn't inst accept an operand.", type_name);
-        }
-      }
-    }
-
-    if (!found)
-      PANIC("unknown inst name '" SV_FMT "'", SV_ARG(basm_inst.name.lexeme));
-
-    bm_program_push(&basm->prg, inst);
-  }
-
+static bool basm_assemble_resolve(Basm *basm) {
   for (size_t i = 0; i < basm->deferred_operands_len; i++) {
     BasmDeferredOperand deferred_operand = basm->deferred_operands[i];
 
     if (!basm_expression_to_word(
             basm, deferred_operand.expr,
             &basm->prg.ptr[deferred_operand.addr].operand)) {
-      PANIC("failed to resolve");
+      bm_inst_dump(basm->prg.ptr[deferred_operand.addr], stderr);
+      fputc('\n', stderr);
+      basm_expression_dump(&deferred_operand.expr, stderr);
+      fputc('\n', stderr);
+      PANIC("failed to resolve %lu", i);
     }
   }
 
-  free((void *)source.ptr);
-  return bm_program_save_to_file(&basm->prg, output_path);
+  return true;
+}
+
+static bool basm_assemble_program(Basm *basm, const char *input_path) {
+  StringView source = sv_read_file(&basm->arena, input_path);
+
+  BasmLexer lexer = basm_lexer_init(source);
+  BasmParser parser = basm_parser_init(&basm->arena, lexer);
+
+  BasmStatement stmt;
+  while (basm_parser_statement(&parser, &stmt)) {
+    switch (stmt.kind) {
+    case BASM_STATEMENT_KIND_INSTRUCTION: {
+      BasmInst basm_inst = stmt.u.inst;
+
+      if (!sv_is_blank(basm_inst.label.lexeme)) {
+        basm_push_variable(
+            basm, basm_inst.label.lexeme,
+            (BasmExpression){.kind = BASM_EXPRESSION_KIND_INTEGER,
+                             .u.integer = basm->prg.len});
+      }
+
+      BmInst inst = {0};
+
+      if (!bm_inst_type_from_string(basm_inst.name.lexeme.ptr, &inst.type)) {
+        PANIC("unknown inst name '" SV_FMT "'", SV_ARG(basm_inst.name.lexeme));
+      }
+
+      if (bm_inst_type_has_operand(inst.type)) {
+        BmWord operand = {0};
+        if (!basm_expression_to_word(basm, basm_inst.expr, &operand)) {
+          basm_push_deferred_operand(basm, basm->prg.len, basm_inst.expr);
+        }
+        inst.operand = operand;
+      } else if (basm_inst.expr.kind != BASM_EXPRESSION_KIND_NONE) {
+        PANIC("'%s' doesn't inst accept an operand.",
+              bm_inst_type_string(inst.type));
+      }
+
+      bm_program_push(&basm->prg, inst);
+    } break;
+    case BASM_STATEMENT_KIND_BIND: {
+      BasmBind bind = stmt.u.bind;
+
+      basm_push_variable(basm, bind.name.lexeme, bind.expr);
+    } break;
+    case BASM_STATEMENT_KIND_INCLUDE: {
+      size_t mark = arena_save(&basm->arena);
+
+      char *include_path =
+          sv_alloc_cstr(&basm->arena, stmt.u.include.path.lexeme);
+
+      if (!basm_assemble_program(basm, include_path))
+        PANIC("failed to include file '%s'.", include_path);
+
+      arena_restore(&basm->arena, mark);
+    } break;
+    default:
+      BM_UNREACHABLE();
+    }
+  }
+
+  return true;
+}
+
+static bool basm_assemble_file(Basm *basm, const char *input_path,
+                               const char *output_path) {
+
+  return basm_assemble_program(basm, input_path) &&
+         basm_assemble_resolve(basm) &&
+         bm_program_save_to_file(&basm->prg, output_path);
 }
 
 Basm basm = {0};
@@ -232,8 +262,13 @@ int main(int argc, char *argv[]) {
     PANIC("expected output");
   }
 
+  if (!arena_init(&basm.arena, 16 * 1024 * 1024))
+    PANIC("failed to initialize arena.");
+
   if (!basm_assemble_file(&basm, input_file, output_file))
     PANIC("failed to assemble '%s'", input_file);
+
+  arena_deinit(&basm.arena);
 
   return EXIT_SUCCESS;
 }

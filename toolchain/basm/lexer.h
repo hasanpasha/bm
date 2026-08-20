@@ -66,6 +66,12 @@ static void basm_lexer_skip_comment(BasmLexer *lexer) {
 
 static bool basm_lexer_is_num(char c) { return isdigit(c) || c == '.'; }
 
+static bool basm_lexer_is_ident_start(char c) { return isalpha(c) || c == '_'; }
+
+static bool basm_lexer_is_ident(char c) {
+  return basm_lexer_is_ident_start(c) || isalnum(c);
+}
+
 static BasmToken basm_lexer_token(BasmLexer *lexer, BasmTokenKind kind) {
   return (BasmToken){.kind = kind, .lexeme = basm_lexer_current_slice(lexer)};
 }
@@ -89,12 +95,27 @@ static BasmToken basm_lexer_next_token(BasmLexer *lexer) {
     return basm_lexer_advance_with_token(lexer, BASM_TOKEN_KIND_COLON);
   case '-':
     return basm_lexer_advance_with_token(lexer, BASM_TOKEN_KIND_MINUS);
+  case '%':
+    return basm_lexer_advance_with_token(lexer, BASM_TOKEN_KIND_PERCENT);
+  case '$':
+    return basm_lexer_advance_with_token(lexer, BASM_TOKEN_KIND_DOLLAR);
+  case '"': {
+    (void)basm_lexer_advance(lexer);
+    lexer->start++;
+    while (!basm_lexer_is_at_end(lexer) &&
+           basm_lexer_current_char(lexer) != '"') {
+      (void)basm_lexer_advance(lexer);
+    }
+    const BasmToken tok = basm_lexer_token(lexer, BASM_TOKEN_KIND_STRING);
+    (void)basm_lexer_advance(lexer);
+    return tok;
+  } break;
   case '\n':
     return basm_lexer_advance_with_token(lexer, BASM_TOKEN_KIND_NEW_LINE);
   default:
-    if (isalpha(basm_lexer_current_char(lexer))) {
+    if (basm_lexer_is_ident_start(basm_lexer_current_char(lexer))) {
       while (!basm_lexer_is_at_end(lexer) &&
-             isalnum(basm_lexer_current_char(lexer))) {
+             basm_lexer_is_ident(basm_lexer_current_char(lexer))) {
         basm_lexer_advance(lexer);
       }
       return basm_lexer_token(lexer, BASM_TOKEN_KIND_IDENTIFIER);

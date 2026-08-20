@@ -15,6 +15,7 @@ typedef enum BASM_EXPRESSION_KIND {
   BASM_EXPRESSION_KIND_FLOAT,
   BASM_EXPRESSION_KIND_VARIABLE,
   BASM_EXPRESSION_KIND_UNARY,
+  BASM_EXPRESSION_KIND_PC,
 } BasmExpressionKind;
 
 const char *basm_expression_kind_string(BasmExpressionKind kind);
@@ -49,8 +50,19 @@ typedef struct BASM_INST {
   BasmExpression expr;
 } BasmInst;
 
+typedef struct BASM_BIND {
+  BasmToken name;
+  BasmExpression expr;
+} BasmBind;
+
+typedef struct BASM_INCLUDE {
+  BasmToken path;
+} BasmInclude;
+
 typedef enum BASM_STATEMENT_KIND {
   BASM_STATEMENT_KIND_INSTRUCTION,
+  BASM_STATEMENT_KIND_BIND,
+  BASM_STATEMENT_KIND_INCLUDE,
 } BasmStatementKind;
 
 const char *basme_statement_kind_string(BasmStatementKind kind);
@@ -59,6 +71,8 @@ typedef struct BASM_STATEMENT {
   BasmStatementKind kind;
   union BASM_STATEMENT_UNION {
     BasmInst inst;
+    BasmBind bind;
+    BasmInclude include;
   } u;
 } BasmStatement;
 
@@ -76,6 +90,8 @@ const char *basm_expression_kind_string(BasmExpressionKind kind) {
     return "VARIABLE";
   case BASM_EXPRESSION_KIND_UNARY:
     return "UNARY";
+  case BASM_EXPRESSION_KIND_PC:
+    return "PC";
   default:
     BM_UNREACHABLE();
     break;
@@ -111,6 +127,9 @@ void basm_expression_dump(const BasmExpression *expr, FILE *stream) {
             basm_expression_unary_operator_string(expr->u.unary.operator));
     basm_expression_dump(expr->u.unary.operand, stream);
     break;
+  case BASM_EXPRESSION_KIND_PC:
+    fprintf(stream, "$");
+    break;
   default:
     BM_UNREACHABLE();
     break;
@@ -122,6 +141,10 @@ const char *basme_statement_kind_string(BasmStatementKind kind) {
   switch (kind) {
   case BASM_STATEMENT_KIND_INSTRUCTION:
     return "INSTRUCTION";
+  case BASM_STATEMENT_KIND_BIND:
+    return "BIND";
+  case BASM_STATEMENT_KIND_INCLUDE:
+    return "INCLUDE";
   default:
     BM_UNREACHABLE();
   }
@@ -136,6 +159,14 @@ void basm_statement_dump(BasmStatement stmt, FILE *stream) {
             basm_token_kind_string(inst.label.kind), SV_ARG(inst.label.lexeme),
             basm_token_kind_string(inst.label.kind), SV_ARG(inst.name.lexeme));
     basm_expression_dump(&inst.expr, stream);
+  } break;
+  case BASM_STATEMENT_KIND_BIND: {
+    BasmBind bind = stmt.u.bind;
+    fprintf(stream, "name:'" SV_FMT "'), expr:", SV_ARG(bind.name.lexeme));
+    basm_expression_dump(&bind.expr, stream);
+  } break;
+  case BASM_STATEMENT_KIND_INCLUDE: {
+    fprintf(stream, "'" SV_FMT "'", SV_ARG(stmt.u.include.path.lexeme));
   } break;
   default:
     BM_UNREACHABLE();

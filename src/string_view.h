@@ -1,8 +1,16 @@
 #ifndef STRING_VIEW_H
 #define STRING_VIEW_H
 
+#include <assert.h>
+#include <ctype.h>
+#include <errno.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
+
+#include <arena.h>
 
 typedef struct STRING_VIEW {
   const char *ptr;
@@ -13,6 +21,10 @@ typedef struct STRING_VIEW {
 #define SV_ARG(sv) (int)sv.len, sv.ptr
 
 StringView sv_from_cstr(const char *str);
+
+StringView sv_dup(Arena *arena, StringView sv);
+
+char *sv_alloc_cstr(Arena *arena, StringView sv);
 
 const char *sv_to_cstr(StringView sv, char *buffer, size_t cap);
 
@@ -40,19 +52,7 @@ unsigned long int sv_parse_ulong(StringView sv);
 
 double sv_parse_double(StringView sv);
 
-StringView sv_read_file(const char *file_path);
-
-#ifdef STRING_VIEW_IMPLEMENTATION
-
-#include <assert.h>
-#include <ctype.h>
-#include <errno.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "string_view.h"
+StringView sv_read_file(Arena *arena, const char *file_path);
 
 StringView sv_from_cstr(const char *str) {
   return (StringView){
@@ -135,6 +135,22 @@ bool sv_chop_right(StringView *sv, StringView slice) {
 #define BUFFER_CAP 1024
 static char buffer[BUFFER_CAP];
 
+StringView sv_dup(Arena *arena, StringView sv) {
+  sv.ptr = sv_alloc_cstr(arena, sv);
+  // printf("'" SV_FMT "'\n", SV_ARG(sv));
+  return sv;
+}
+
+char *sv_alloc_cstr(Arena *arena, StringView sv) {
+  char *buffer = arena_new_array(arena, char, sv.len + 1);
+  if (buffer == NULL)
+    return NULL;
+
+  memcpy(buffer, sv.ptr, sv.len);
+  buffer[sv.len] = '\0';
+  return buffer;
+}
+
 const char *sv_to_cstr(StringView sv, char *buffer, size_t cap) {
   assert(sv.len < cap);
   memcpy(buffer, sv.ptr, sv.len);
@@ -165,7 +181,7 @@ double sv_parse_double(StringView sv) {
   return result;
 }
 
-StringView sv_read_file(const char *file_path) {
+StringView sv_read_file(Arena *arena, const char *file_path) {
   FILE *f = fopen(file_path, "rb");
   if (f == NULL)
     PANIC("could not open file '%s': %s", file_path, strerror(errno));
@@ -185,7 +201,7 @@ StringView sv_read_file(const char *file_path) {
     PANIC("could not seek to the beginning of file '%s': %s.", file_path,
           strerror(errno));
 
-  char *buffer = (char *)malloc(file_size);
+  char *buffer = arena_new_array(arena, char, file_size);
   if (buffer == NULL)
     PANIC("failed to allocate enough memory to read file: '%s'.", file_path);
 
@@ -206,7 +222,5 @@ StringView sv_read_file(const char *file_path) {
 
   return sv;
 }
-
-#endif
 
 #endif
