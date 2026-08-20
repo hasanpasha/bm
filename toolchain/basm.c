@@ -103,9 +103,16 @@ static BasmExpression basm_fold_expr(Basm *basm, BasmExpression expr) {
     case BASM_EXPRESSION_KIND_UNARY:
       *expr.u.unary.operand = operand_value;
       break;
+    case BASM_EXPRESSION_KIND_PC:
+      PANIC("pc expression should have been resolved before reaching this "
+            "point.");
     default:
       BM_UNREACHABLE();
     }
+  } break;
+  case BASM_EXPRESSION_KIND_PC: {
+    expr.kind = BASM_EXPRESSION_KIND_INTEGER;
+    expr.u.integer = basm->prg.len;
   } break;
   default:
     break;
@@ -130,6 +137,7 @@ static bool basm_expression_to_word(Basm *basm, BasmExpression expr,
     return true;
   case BASM_EXPRESSION_KIND_VARIABLE:
   case BASM_EXPRESSION_KIND_UNARY:
+  case BASM_EXPRESSION_KIND_PC:
     return false;
   default:
     BM_UNREACHABLE();

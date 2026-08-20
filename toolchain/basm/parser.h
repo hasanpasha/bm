@@ -105,6 +105,7 @@ static BasmExpression unary(BasmParser *parser) {
   case BASM_TOKEN_KIND_INTEGER:
   case BASM_TOKEN_KIND_FLOAT:
   case BASM_TOKEN_KIND_COLON:
+  case BASM_TOKEN_KIND_DOLLAR:
   case BASM_TOKEN_KIND_NEW_LINE:
   case BASM_TOKEN_KIND_END_OF_INPUT:
     PANIC("unexpected unary operator");
@@ -121,6 +122,11 @@ static BasmExpression unary(BasmParser *parser) {
                       .operand = alloc_expr(parser, operand)}}};
 }
 
+static BasmExpression pc(BasmParser *parser) {
+  basm_parser_munch(parser, BASM_TOKEN_KIND_DOLLAR);
+  return (BasmExpression){.kind = BASM_EXPRESSION_KIND_PC};
+}
+
 static BasmExpression none_expr(BasmParser *parser) {
   (void)parser;
   return (BasmExpression){.kind = BASM_EXPRESSION_KIND_NONE};
@@ -133,6 +139,7 @@ static const BasmPareseExprRule rules[] = {
     [BASM_TOKEN_KIND_FLOAT] = {_float, NULL, BASM_PARSE_PRECEDENCE_NONE},
     [BASM_TOKEN_KIND_COLON] = {NULL, NULL, BASM_PARSE_PRECEDENCE_NONE},
     [BASM_TOKEN_KIND_MINUS] = {unary, NULL, BASM_PARSE_PRECEDENCE_UNARY},
+    [BASM_TOKEN_KIND_DOLLAR] = {pc, NULL, BASM_PARSE_PRECEDENCE_NONE},
     [BASM_TOKEN_KIND_NEW_LINE] = {none_expr, NULL, BASM_PARSE_PRECEDENCE_NONE},
     [BASM_TOKEN_KIND_END_OF_INPUT] = {none_expr, NULL, BASM_PARSE_PRECEDENCE_NONE},
 };
@@ -230,7 +237,9 @@ static bool basm_parser_statement(BasmParser *parser,
   case BASM_TOKEN_KIND_FLOAT:
   case BASM_TOKEN_KIND_COLON:
   case BASM_TOKEN_KIND_MINUS:
-
+  case BASM_TOKEN_KIND_DOLLAR:
+    PANIC("can't start a statement with this token %s.",
+          basm_token_kind_string(parser->current.kind));
   case BASM_TOKEN_KIND_NEW_LINE:
     while (parser->current.kind == BASM_TOKEN_KIND_NEW_LINE)
       (void)basm_parser_advance(parser);

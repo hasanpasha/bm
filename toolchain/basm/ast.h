@@ -15,6 +15,7 @@ typedef enum BASM_EXPRESSION_KIND {
   BASM_EXPRESSION_KIND_FLOAT,
   BASM_EXPRESSION_KIND_VARIABLE,
   BASM_EXPRESSION_KIND_UNARY,
+  BASM_EXPRESSION_KIND_PC,
 } BasmExpressionKind;
 
 const char *basm_expression_kind_string(BasmExpressionKind kind);
@@ -89,6 +90,8 @@ const char *basm_expression_kind_string(BasmExpressionKind kind) {
     return "VARIABLE";
   case BASM_EXPRESSION_KIND_UNARY:
     return "UNARY";
+  case BASM_EXPRESSION_KIND_PC:
+    return "PC";
   default:
     BM_UNREACHABLE();
     break;
@@ -123,6 +126,9 @@ void basm_expression_dump(const BasmExpression *expr, FILE *stream) {
     fprintf(stream, "%s, ",
             basm_expression_unary_operator_string(expr->u.unary.operator));
     basm_expression_dump(expr->u.unary.operand, stream);
+    break;
+  case BASM_EXPRESSION_KIND_PC:
+    fprintf(stream, "$");
     break;
   default:
     BM_UNREACHABLE();
