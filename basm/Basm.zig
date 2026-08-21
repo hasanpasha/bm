@@ -1,25 +1,22 @@
-program: Program,
 variables: std.StringHashMap(Expression),
 
 allocator: std.mem.Allocator,
 
 pub const Error = error{
     undefined_variables,
+    already_defined,
 };
 
 pub fn init(allocator: std.mem.Allocator) !Basm {
-    const program: Program = try .init(allocator, 1024);
     const variables: std.StringHashMap(Expression) = .init(allocator);
 
     return .{
-        .program = program,
         .variables = variables,
         .allocator = allocator,
     };
 }
 
 pub fn deinit(self: *Basm) void {
-    self.program.deinit();
     self.variables.deinit();
 }
 
@@ -34,7 +31,7 @@ fn resolve_expression(self: *Basm, expr: Expression) Error!Inst.Word {
     };
 }
 
-pub fn assemble_file(self: *Basm, file_path: []const u8, io: std.Io) !void {
+pub fn assemble_file(self: *Basm, file_path: []const u8, io: std.Io, program: *Program) !void {
     const source = try std.Io.Dir.cwd().readFileAlloc(io, file_path, self.allocator, .unlimited);
     defer self.allocator.free(source);
 
@@ -42,7 +39,10 @@ pub fn assemble_file(self: *Basm, file_path: []const u8, io: std.Io) !void {
 
     while (parser.statement()) |stmt| {
         switch (stmt) {
-            .label => |name| try self.variables.put(name, .{ .integer = self.program.size() }),
+            .label => |name| {
+                if (self.variables.contains(name)) return Error.already_defined;
+                try self.variables.put(name, .{ .integer = program.size() });
+            },
             .instruction => |basm_inst| {
                 if (std.meta.stringToEnum(Inst.Type, basm_inst.name)) |inst_type| {
                     var inst: Inst = .{ .type = inst_type };
@@ -55,7 +55,7 @@ pub fn assemble_file(self: *Basm, file_path: []const u8, io: std.Io) !void {
                         }
                     }
 
-                    try self.program.push(inst);
+                    try program.push(inst);
                 } else {
                     panic("unknown instruction '{s}'", .{basm_inst.name});
                 }
