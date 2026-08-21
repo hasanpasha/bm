@@ -1,6 +1,12 @@
 .{
     .name = .zbm,
     .version = "0.0.1",
+    .dependencies = .{
+        .args = .{
+            .url = "git+https://github.com/ikskuh/zig-args?ref=master#fae95c8350c8791752392cc24efa17b5b8b9275b",
+            .hash = "args-0.0.0-CiLiqrjgAAAJ1dlySoNHUhYpX1btAdDU2Rr4Ls61VTbO",
+        },
+    },
     .minimum_zig_version = "0.16.0",
     .paths = .{""},
     .fingerprint = 0xc2ef20545491b0cb,

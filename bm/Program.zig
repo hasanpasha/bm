@@ -9,6 +9,10 @@ pub fn deinit(self: *Program) void {
     self.insts.deinit(self.allocator);
 }
 
+pub fn size(self: *const Program) usize {
+    return self.insts.items.len;
+}
+
 pub fn push(self: *Program, inst: Inst) !void {
     try self.insts.append(self.allocator, inst);
 }

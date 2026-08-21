@@ -4,17 +4,23 @@ pub fn main(init: std.process.Init) !void {
     _ = args.next(); // skip the program name
 
     const input_file_path = args.next() orelse panic("No input file provided", .{});
-    const source = try std.Io.Dir.cwd().readFileAlloc(init.io, input_file_path, init.gpa, .unlimited);
-    defer init.gpa.free(source);
+    const output_file_path = args.next() orelse panic("No output file provided", .{});
 
-    var lexer: Lexer = .{ .source = source };
+    var basm: Basm = try .init(init.gpa);
+    defer basm.deinit();
 
-    while (lexer.next()) |token| {
-        log.info("{s}:{f}", .{ input_file_path, std.fmt.alt(token, .source_fmt) });
+    try basm.assemble_file(input_file_path, init.io);
+
+    for (basm.program.insts.items) |inst| {
+        log.info("{f}", .{inst});
     }
+
+    try basm.program.save_to_file(init.io, output_file_path);
 }
 
+const Basm = @import("Basm.zig");
 const Lexer = @import("Lexer.zig");
+const Parser = @import("Parser.zig");
 
 const std = @import("std");
 const log = std.log.scoped(.basm);

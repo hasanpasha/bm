@@ -1,7 +1,10 @@
-push 1
-push 2
-push 3
-addi
-addi
-dump
-hlt
+    push 0
+    push 1
+begin:
+    dup 1
+begin:
+    dup 1
+    addi
+    dup 0
+    debug_print
+    jmp begin

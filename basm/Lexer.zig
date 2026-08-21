@@ -1,3 +1,4 @@
+source_name: []const u8,
 source: []const u8,
 start_pos: usize = 0,
 current_pos: usize = 0,
@@ -113,7 +114,7 @@ pub fn next(self: *Lexer) ?Token {
         else if (is_numeric(c))
             self.number()
         else
-            panic("unexpected character: {c}", .{c}),
+            panic("{s}:{f}: unexpected character: {c}", .{ self.source_name, self.start_loc, c }),
     };
 }
 

@@ -4,6 +4,8 @@ pub fn build(b: *std.Build) void {
     const target = b.resolveTargetQuery(.{});
     const optimize = b.standardOptimizeOption(.{});
 
+    const args_mod = b.dependency("args", .{ .target = target, .optimize = optimize }).module("args");
+
     const bm_mod = b.addModule("bm", .{
         .root_source_file = b.path("bm/root.zig"),
         .target = target,
@@ -18,6 +20,7 @@ pub fn build(b: *std.Build) void {
             .optimize = optimize,
             .imports = &.{
                 .{ .name = "bm", .module = bm_mod },
+                .{ .name = "args", .module = args_mod },
             },
         }),
     });
@@ -28,6 +31,10 @@ pub fn build(b: *std.Build) void {
             .root_source_file = b.path("basm/main.zig"),
             .target = target,
             .optimize = optimize,
+            .imports = &.{
+                .{ .name = "bm", .module = bm_mod },
+                .{ .name = "args", .module = args_mod },
+            },
         }),
     });
 
