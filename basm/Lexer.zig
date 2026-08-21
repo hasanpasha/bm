@@ -1,36 +1,3 @@
-pub const TokenType = enum {
-    ident,
-    integer,
-    float,
-    new_line,
-    colon,
-};
-
-pub const Location = struct {
-    line: usize,
-    column: usize,
-
-    pub const start: Location = .{ .line = 1, .column = 1 };
-
-    pub fn format(self: Location, writer: *std.Io.Writer) std.Io.Writer.Error!void {
-        try writer.print("{}:{}", .{ self.line, self.column });
-    }
-};
-
-pub const Token = struct {
-    type: TokenType,
-    lexeme: []const u8,
-    location: Location,
-
-    pub fn source_fmt(self: Token, writer: *std.Io.Writer) std.Io.Writer.Error!void {
-        try writer.print("{f}:{f}", .{ self.location, self });
-    }
-
-    pub fn format(self: Token, writer: *std.Io.Writer) std.Io.Writer.Error!void {
-        try writer.print("{t}('{s}')", .{ self.type, self.lexeme });
-    }
-};
-
 source: []const u8,
 start_pos: usize = 0,
 current_pos: usize = 0,
@@ -118,11 +85,11 @@ fn number(self: *Lexer) Token {
     return self.token(if (encountered_dot) .float else .integer);
 }
 
-fn token(self: *Lexer, token_type: TokenType) Token {
+fn token(self: *Lexer, token_type: Type) Token {
     return Token{ .type = token_type, .lexeme = self.current_lexeme(), .location = self.start_loc };
 }
 
-fn advance_and_return(self: *Lexer, token_type: TokenType) Token {
+fn advance_and_return(self: *Lexer, token_type: Type) Token {
     self.advance();
     return self.token(token_type);
 }
@@ -154,6 +121,10 @@ const Lexer = @This();
 
 const std = @import("std");
 const panic = std.debug.panic;
+
+const Token = @import("Token.zig");
+const Location = Token.Location;
+const Type = Token.Type;
 
 test "numbers" {
     const source = "123 456.789";
