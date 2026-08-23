@@ -64,11 +64,12 @@ pub fn main(init: std.process.Init) !void {
     var basm: Basm = try .init(init.gpa);
     defer basm.deinit();
 
-    var program: Program = try .init(init.gpa, 1024);
+    var program: Program = try .init(init.gpa);
     defer program.deinit();
 
     try basm.assemble_file(options.input, init.io, &program);
-    try program.save_to_file(init.io, options.output);
+
+    try program.save_to_file(options.output, init.io);
 }
 
 const Basm = @import("Basm.zig");

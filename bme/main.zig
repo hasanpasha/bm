@@ -60,11 +60,13 @@ const Options = struct {
 pub fn main(init: std.process.Init) !void {
     const options: Options = try .parse(init);
 
-    var machine: Machine = try Machine.init(init.gpa);
-    defer machine.deinit();
+    var machine: Machine = .{ .stack = try .init(init.gpa, 1024) };
+    defer machine.stack.deinit();
 
-    try machine.program.load_from_file(init.io, options.input);
-    try machine.execute_program(options.limit);
+    var program: Program = try .load_from_file(options.input, init.io, init.gpa);
+    defer program.deinit();
+
+    try machine.execute_program(program, options.limit);
 }
 
 const std = @import("std");
@@ -73,5 +75,6 @@ const panic = std.debug.panic;
 const bm = @import("bm");
 const Machine = bm.Machine;
 const Inst = bm.Inst;
+const Program = bm.Program;
 
 const argsParser = @import("args");

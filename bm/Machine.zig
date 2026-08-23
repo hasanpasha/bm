@@ -1,7 +1,5 @@
 stack: Stack,
 
-program: Program,
-
 pc: usize = 0,
 
 halt: bool = false,
@@ -10,15 +8,15 @@ pub const Stack = struct {
     data: std.ArrayList(Word),
     allocator: std.mem.Allocator,
 
-    pub fn init(allocator: std.mem.Allocator, capacity: usize) !Stack {
-        return .{ .data = try .initCapacity(allocator, capacity), .allocator = allocator };
+    pub fn init(allocator: std.mem.Allocator, cap: usize) std.mem.Allocator.Error!Stack {
+        return .{ .data = try .initCapacity(allocator, cap), .allocator = allocator };
     }
 
     pub fn deinit(self: *Stack) void {
         self.data.deinit(self.allocator);
     }
 
-    pub fn get(self: Stack, idx: usize) Error!Word {
+    pub fn get(self: *const Stack, idx: usize) Error!Word {
         const offset = @as(i64, @intCast(self.data.items.len)) - @as(i64, @intCast(idx)) - 1;
         if (offset < 0)
             return Error.stack_underflow;
@@ -28,11 +26,14 @@ pub const Stack = struct {
     }
 
     pub fn push(self: *Stack, word: Word) Error!void {
-        self.data.append(self.allocator, word) catch return Error.stack_overflow;
+        if (self.data.items.len >= self.data.capacity)
+            return Error.stack_overflow;
+
+        self.data.appendAssumeCapacity(word);
     }
 
     pub fn pop(self: *Stack) Error!Word {
-        return self.data.pop() orelse Error.stack_underflow;
+        return self.data.pop() orelse return Error.stack_underflow;
     }
 };
 
@@ -42,21 +43,6 @@ pub const Error = error{
     divide_by_zero,
     illegal_inst_access,
 };
-
-pub fn init(allocator: std.mem.Allocator) !Machine {
-    return .{ .stack = try .init(allocator, 1024), .program = try .init(allocator, 1024) };
-}
-
-pub fn deinit(self: *Machine) void {
-    self.stack.deinit();
-    self.program.deinit();
-}
-
-pub fn fetch_inst(self: *Machine) Error!Inst {
-    const ins = self.program.get_or_null(self.pc) orelse return Error.illegal_inst_access;
-    self.pc += 1;
-    return ins;
-}
 
 pub fn execute_inst(self: *Machine, ins: Inst) Error!void {
     const inst_type = ins.type;
@@ -104,15 +90,20 @@ pub const Limit = union(enum) {
     limited: usize,
 };
 
-pub fn execute_program(self: *Machine, limit: Limit) Error!void {
+pub fn execute_program(self: *Machine, program: Program, limit: Limit) Error!void {
     var limit_counter: isize = switch (limit) {
         .no_limit => -1,
         .limited => |limit_val| @intCast(limit_val),
     };
 
     while (!self.halt and limit_counter != 0) {
-        const ins = try self.fetch_inst();
-        try self.execute_inst(ins);
+        if (self.pc >= program.insts.items.len)
+            return Error.illegal_inst_access;
+
+        const inst = program.insts.items[self.pc];
+        defer self.pc += 1;
+
+        try self.execute_inst(inst);
 
         if (limit_counter > 0)
             limit_counter -= 1;
@@ -122,9 +113,9 @@ pub fn execute_program(self: *Machine, limit: Limit) Error!void {
 const Machine = @This();
 
 const std = @import("std");
+const assert = std.debug.assert;
 const log = std.log.scoped(.bm);
 
 const Inst = @import("inst.zig").Inst;
 const Word = Inst.Word;
-
-pub const Program = @import("Program.zig");
+const Program = @import("Program.zig");
