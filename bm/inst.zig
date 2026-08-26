@@ -22,6 +22,10 @@ pub const Inst = packed struct {
                 else => false,
             };
         }
+
+        pub const alternatives = .{
+            .dump = .debug_print,
+        };
     };
 
     pub const Word = u64;

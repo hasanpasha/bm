@@ -44,21 +44,27 @@ pub fn assemble_file(self: *Basm, file_path: []const u8, io: std.Io, program: *P
                 try self.variables.put(name, .{ .integer = program.size() });
             },
             .instruction => |basm_inst| {
-                if (std.meta.stringToEnum(Inst.Type, basm_inst.name)) |inst_type| {
-                    var inst: Inst = .{ .type = inst_type };
-
-                    if (inst_type.has_operand()) {
-                        if (basm_inst.operand) |operand| {
-                            inst.operand = try self.resolve_expression(operand);
-                        } else {
-                            panic("{t} requires an operand", .{inst_type});
+                const inst_type = std.meta.stringToEnum(Inst.Type, basm_inst.name) orelse blk: {
+                    inline for (std.meta.fields(@TypeOf(Inst.Type.alternatives))) |field| {
+                        if (std.mem.eql(u8, field.name, basm_inst.name)) {
+                            break :blk @field(Inst.Type.alternatives, field.name);
                         }
                     }
 
-                    try program.push(inst);
-                } else {
                     panic("unknown instruction '{s}'", .{basm_inst.name});
+                };
+
+                var inst: Inst = .{ .type = inst_type };
+
+                if (inst_type.has_operand()) {
+                    if (basm_inst.operand) |operand| {
+                        inst.operand = try self.resolve_expression(operand);
+                    } else {
+                        panic("{t} requires an operand", .{inst_type});
+                    }
                 }
+
+                try program.push(inst);
             },
         }
     }
