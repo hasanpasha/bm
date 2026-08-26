@@ -8,6 +8,7 @@ pub const Inst = packed struct {
         jmp,
         push,
         drop,
+        swap,
         dup,
         addi,
         subi,
@@ -17,7 +18,7 @@ pub const Inst = packed struct {
 
         pub fn has_operand(self: Type) bool {
             return switch (self) {
-                .jmp, .push, .dup => true,
+                .jmp, .push, .dup, .swap => true,
                 else => false,
             };
         }

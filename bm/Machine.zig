@@ -16,6 +16,15 @@ pub const Stack = struct {
         self.data.deinit(self.allocator);
     }
 
+    pub fn set(self: *Stack, idx: usize, value: Word) Error!void {
+        const offset = @as(i64, @intCast(self.data.items.len)) - @as(i64, @intCast(idx)) - 1;
+        if (offset < 0)
+            return Error.stack_underflow;
+
+        const addr: usize = @intCast(offset);
+        self.data.items[addr] = value;
+    }
+
     pub fn get(self: *const Stack, idx: usize) Error!Word {
         const offset = @as(i64, @intCast(self.data.items.len)) - @as(i64, @intCast(idx)) - 1;
         if (offset < 0)
@@ -55,6 +64,11 @@ pub fn execute_inst(self: *Machine, ins: Inst) Error!void {
         .dup => {
             const word = try self.stack.get(operand);
             try self.stack.push(word);
+        },
+        .swap => {
+            const t = try self.stack.get(operand);
+            try self.stack.set(operand, try self.stack.get(0));
+            try self.stack.set(0, t);
         },
         .addi => {
             const b = try self.stack.pop();
